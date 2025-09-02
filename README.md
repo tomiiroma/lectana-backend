@@ -17,22 +17,5 @@ API REST para la plataforma de lectura educativa **Lectana**, desarrollada en **
 
 ---
 
-## 🏗️ Estructura del Proyecto
-lectana-backend/
-│
-├── src/
-│ ├── controllers/ # Lógica de cada módulo
-│ ├── services/ # Lógica de negocio
-│ ├── routes/ # Rutas Express
-│ ├── middleware/ # Middlewares personalizados
-│ ├── prisma/ # Cliente y esquema de Prisma
-│ ├── utils/ # Funciones auxiliares
-│ └── app.js # App principal
-│
-├── .env # Variables de entorno
-├── package.json
-└── README.md
-
-
 
 
