@@ -1,0 +1,37 @@
+{
+  "name": "lectana-backend",
+  "version": "1.0.0",
+  "description": "API REST para la plataforma de lectura educativa **Lectana**, desarrollada en **Node.js** y **Express**. Este backend centraliza la lógica de negocio y se conecta con una base de datos **PostgreSQL** alojada en **Supabase**. Sirve tanto al panel web de administración como a la app móvil para docentes y estudiantes.",
+  "main": "index.js",
+  "type": "module",
+
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomiiroma/lectana-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/tomiiroma/lectana-backend/issues"
+  },
+  "homepage": "https://github.com/tomiiroma/lectana-backend#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
