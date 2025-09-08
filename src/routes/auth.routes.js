@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { loginController } from '../controllers/auth.controller.js';
+import { 
+  loginController, 
+  registerAlumnoController, 
+  registerDocenteController, 
+  registerAdministradorController,
+  getMeController 
+} from '../controllers/auth.controller.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -10,5 +17,9 @@ router.use((req, res, next) => {
 });
 
 router.post('/login', loginController);
+router.post('/register/alumno', registerAlumnoController);
+router.post('/register/docente', registerDocenteController);
+router.post('/register/administrador', registerAdministradorController);
+router.get('/me', requireAuth, getMeController);
 
 export default router;

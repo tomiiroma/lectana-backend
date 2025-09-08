@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { crearAulaController, obtenerAulaController, actualizarAulaController, eliminarAulaController, listarAlumnosDeAulaController } from '../controllers/aula.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -9,10 +10,13 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/', crearAulaController);
-router.get('/:id', obtenerAulaController);
-router.put('/:id', actualizarAulaController);
-router.delete('/:id', eliminarAulaController);
-router.get('/:id/alumnos', listarAlumnosDeAulaController);
+// Todas las rutas requieren autenticación
+router.use(requireAuth);
+
+router.post('/', requireRole(['docente', 'administrador']), crearAulaController);
+router.get('/:id', requireRole(['docente', 'administrador']), obtenerAulaController);
+router.put('/:id', requireRole(['docente', 'administrador']), actualizarAulaController);
+router.delete('/:id', requireRole(['docente', 'administrador']), eliminarAulaController);
+router.get('/:id/alumnos', requireRole(['docente', 'administrador']), listarAlumnosDeAulaController);
 
 export default router;

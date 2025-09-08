@@ -13,6 +13,14 @@ import administradorRouter from './routes/administrador.routes.js';
 import authRouter from './routes/auth.routes.js';
 import aulaRouter from './routes/aula.routes.js';
 import actividadRouter from './routes/actividad.routes.js';
+import alumnoRouter from './routes/alumno.routes.js';
+import cuentoRouter from './routes/cuento.routes.js';
+import generoRouter from './routes/genero.routes.js';
+import autorRouter from './routes/autor.routes.js';
+import itemRouter from './routes/item.routes.js';
+import logroRouter from './routes/logro.routes.js';
+import archivoRouter from './routes/archivo.routes.js';
+import imagenRouter from './routes/imagen.routes.js';
 
 
 
@@ -55,6 +63,14 @@ app.use('/api/administradores', administradorRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/aulas', aulaRouter);
 app.use('/api/actividades', actividadRouter);
+app.use('/api/alumnos', alumnoRouter);
+app.use('/api/cuentos', cuentoRouter);
+app.use('/api/generos', generoRouter);
+app.use('/api/autores', autorRouter);
+app.use('/api/items', itemRouter);
+app.use('/api/logros', logroRouter);
+app.use('/api/archivos', archivoRouter);
+app.use('/api/imagenes', imagenRouter);
 
 
 
