@@ -3,7 +3,6 @@ import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador 
 
 const crearAdministradorSchema = z.object({
   dni: z.string().min(6),
-  email: z.string().email(),
   usuario_id_usuario: z.number().int().positive(),
 });
 
@@ -38,7 +37,6 @@ export async function obtenerAdministradorController(req, res, next) {
 
 const actualizarAdministradorSchema = z.object({
   dni: z.string().min(6).optional(),
-  email: z.string().email().optional(),
   usuario_id_usuario: z.number().int().positive().optional(),
 });
 

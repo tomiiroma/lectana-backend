@@ -3,8 +3,11 @@ import { crearDocente, obtenerDocentePorId, actualizarDocente } from '../service
 
 const crearDocenteSchema = z.object({
   dni: z.string().min(6),
-  email: z.string().email(),
-  docente_col: z.string().optional(),
+  telefono: z.string().optional(),
+  institucion_nombre: z.string().optional(),
+  institucion_pais: z.string().optional(),
+  institucion_provincia: z.string().optional(),
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional(),
   usuario_id_usuario: z.number().int().positive(),
 });
 
@@ -39,8 +42,12 @@ export async function obtenerDocenteController(req, res, next) {
 
 const actualizarDocenteSchema = z.object({
   dni: z.string().min(6).optional(),
-  email: z.string().email().optional(),
-  docente_col: z.string().optional(),
+  telefono: z.string().optional(),
+  institucion_nombre: z.string().optional(),
+  institucion_pais: z.string().optional(),
+  institucion_provincia: z.string().optional(),
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional(),
+  verificado: z.boolean().optional(),
   usuario_id_usuario: z.number().int().positive().optional(),
 });
 
