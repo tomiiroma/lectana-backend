@@ -3,24 +3,58 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 
 import healthRouter from './routes/health.routes.js';
 import testRouter from './routes/test.routes.js';
+import usuarioRouter from './routes/usuario.routes.js';
+import docenteRouter from './routes/docente.routes.js';
+import administradorRouter from './routes/administrador.routes.js';
+import authRouter from './routes/auth.routes.js';
+import aulaRouter from './routes/aula.routes.js';
+import actividadRouter from './routes/actividad.routes.js';
+
+
 
 const app = express();
 
 // Middlewares
+const rawOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
 app.use(cors({
-  origin: (process.env.CORS_ORIGINS || '').split(','),
+  origin: rawOrigins.length ? rawOrigins : (process.env.NODE_ENV !== 'production' ? true : false),
   credentials: true,
 }));
 app.use(helmet());
 app.use(express.json());
-app.use(morgan('dev'));
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
+// Rate limiter básico (por IP) para endpoints sensibles
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Exponer limiter para uso en routers si se requiere
+app.set('authLimiter', authLimiter);
 
 // Rutas
 app.use('/health', healthRouter);
-app.use('/test', testRouter);
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/test', testRouter);
+}
+app.use('/api/usuarios', usuarioRouter);
+app.use('/api/docentes', docenteRouter);
+app.use('/api/administradores', administradorRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/aulas', aulaRouter);
+app.use('/api/actividades', actividadRouter);
 
 
 
