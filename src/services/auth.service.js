@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { crearUsuario } from './usuario.service.js';
 import { crearDocente } from './docente.service.js';
 import { crearAdministrador } from './administrador.service.js';
+import { verificarCapacidadAula } from '../utils/validaciones.js';
 
 export async function login({ email, password }) {
   const jwtSecret = process.env.JWT_SECRET;
@@ -85,6 +86,13 @@ export async function registerAlumno({ nombre, apellido, email, edad, password, 
       .single();
     
     if (aula) {
+      // Verificar límite de estudiantes por aula (máximo 50)
+      const hayEspacio = await verificarCapacidadAula(aula.id_aula);
+      
+      if (!hayEspacio) {
+        throw new Error('El aula ha alcanzado el límite máximo de 50 estudiantes');
+      }
+
       await supabaseAdmin
         .from('alumno')
         .insert({

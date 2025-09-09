@@ -1,13 +1,19 @@
 import { Router } from 'express';
 import { 
-  crearItemController, 
+  crearItemController,
+  crearItemConImagenController,
   obtenerItemController, 
-  listarItemsController, 
+  listarItemsController,
+  listarItemsPorCategoriaController,
+  listarItemsPorTipoController,
   actualizarItemController, 
   eliminarItemController,
-  comprarItemController,
-  obtenerItemsCompradosController
+  desbloquearItemController,
+  obtenerItemsDesbloqueadosController,
+  verificarItemDesbloqueadoController,
+  obtenerEstadisticasItemsController
 } from '../controllers/item.controller.js';
+import { upload } from '../services/imagen.service.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -21,14 +27,24 @@ router.use((req, res, next) => {
 
 // Rutas públicas
 router.get('/', listarItemsController);
+router.get('/categoria/:categoria', listarItemsPorCategoriaController);
+router.get('/tipo/:tipo', listarItemsPorTipoController);
+router.get('/estadisticas', obtenerEstadisticasItemsController);
 router.get('/:id', obtenerItemController);
 
-// Rutas para alumnos
-router.post('/:id/comprar', requireAuth, requireRole('alumno'), comprarItemController);
-router.get('/mis-items/comprados', requireAuth, requireRole('alumno'), obtenerItemsCompradosController);
+// Rutas para estudiantes
+router.post('/:id/desbloquear', requireAuth, requireRole('alumno'), desbloquearItemController);
+router.get('/mis-items/desbloqueados', requireAuth, requireRole('alumno'), obtenerItemsDesbloqueadosController);
+router.get('/:id/verificar-desbloqueo', requireAuth, requireRole('alumno'), verificarItemDesbloqueadoController);
 
 // Rutas solo para administradores
 router.post('/', requireAuth, requireRole('administrador'), crearItemController);
+router.post('/con-imagen', 
+  requireAuth, 
+  requireRole('administrador'), 
+  upload.single('imagen'), 
+  crearItemConImagenController
+);
 router.put('/:id', requireAuth, requireRole('administrador'), actualizarItemController);
 router.delete('/:id', requireAuth, requireRole('administrador'), eliminarItemController);
 

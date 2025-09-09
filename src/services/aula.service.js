@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { verificarLimiteAulasDocente } from '../utils/validaciones.js';
 
 function generateRandomCode(length = 6) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -8,6 +9,13 @@ function generateRandomCode(length = 6) {
 }
 
 export async function crearAula({ nombre_aula, grado, docente_id_docente }) {
+  // Verificar límite de aulas por docente (máximo 20)
+  const puedeCrearAula = await verificarLimiteAulasDocente(docente_id_docente);
+  
+  if (!puedeCrearAula) {
+    throw new Error('Has alcanzado el límite máximo de 20 aulas');
+  }
+
   // Generar código único
   let codigo = generateRandomCode(6);
   for (let i = 0; i < 5; i++) {

@@ -1,72 +1,51 @@
 import { z } from 'zod';
 import { 
-  subirImagenCuento, 
-  obtenerURLImagen, 
-  eliminarImagenCuento, 
-  listarImagenesCuentos 
+  subirImagen, 
+  eliminarImagen, 
+  listarImagenes, 
+  obtenerEstadisticasAlmacenamiento,
+  validarTipoImagen 
 } from '../services/imagen.service.js';
 
-const idSchema = z.object({
-  id: z.string().uuid(),
+const subirImagenSchema = z.object({
+  carpeta: z.enum(['items', 'avatares', 'marcos', 'fondos']).default('items'),
+  tipo: z.string().optional(),
+  categoria: z.string().optional()
 });
 
 export async function subirImagenController(req, res, next) {
   try {
-    const { id } = idSchema.parse(req.params);
-    
     if (!req.file) {
       return res.status(400).json({ 
         ok: false, 
-        error: 'Archivo de imagen requerido' 
+        error: 'No se proporcionó ningún archivo' 
       });
     }
 
-    // Validar que sea imagen
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(req.file.mimetype)) {
+    // Validar tipo de imagen
+    if (!validarTipoImagen(req.file.mimetype)) {
       return res.status(400).json({ 
         ok: false, 
-        error: 'Solo se permiten archivos de imagen (JPG, PNG, WebP)' 
+        error: 'Tipo de archivo no permitido. Solo se aceptan: JPEG, PNG, GIF, WebP' 
       });
     }
 
-    // Validar tamaño (máximo 5MB para imágenes)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (req.file.size > maxSize) {
+    // Validar tamaño (máximo 5MB)
+    if (req.file.size > 5 * 1024 * 1024) {
       return res.status(400).json({ 
         ok: false, 
-        error: 'La imagen no puede superar los 5MB' 
+        error: 'El archivo es demasiado grande. Máximo 5MB' 
       });
     }
 
-    const result = await subirImagenCuento(id, req.file.buffer, req.file.originalname);
+    const { carpeta } = subirImagenSchema.parse(req.body);
+    
+    const resultado = await subirImagen(req.file, carpeta);
     
     res.status(201).json({ 
       ok: true, 
-      data: result,
-      message: 'Imagen de portada subida exitosamente' 
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: 'Validación fallida', 
-        detalles: error.flatten() 
-      });
-    }
-    next(error);
-  }
-}
-
-export async function obtenerURLImagenController(req, res, next) {
-  try {
-    const { id } = idSchema.parse(req.params);
-    const url = await obtenerURLImagen(id);
-    
-    res.json({ 
-      ok: true, 
-      data: { url },
-      message: 'URL obtenida exitosamente' 
+      data: resultado,
+      message: 'Imagen subida exitosamente' 
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -82,12 +61,90 @@ export async function obtenerURLImagenController(req, res, next) {
 
 export async function eliminarImagenController(req, res, next) {
   try {
-    const { id } = idSchema.parse(req.params);
-    const result = await eliminarImagenCuento(id);
+    const { ruta } = req.body;
+    
+    if (!ruta) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Ruta de imagen requerida' 
+      });
+    }
+
+    const resultado = await eliminarImagen(ruta);
     
     res.json({ 
       ok: true, 
-      ...result 
+      data: resultado,
+      message: 'Imagen eliminada exitosamente' 
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listarImagenesController(req, res, next) {
+  try {
+    const { carpeta = 'items' } = req.query;
+    
+    const resultado = await listarImagenes(carpeta);
+    
+    res.json({ 
+      ok: true, 
+      data: resultado 
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function obtenerEstadisticasAlmacenamientoController(req, res, next) {
+  try {
+    const resultado = await obtenerEstadisticasAlmacenamiento();
+    
+    res.json({ 
+      ok: true, 
+      data: resultado 
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function subirMultipleImagenesController(req, res, next) {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'No se proporcionaron archivos' 
+      });
+    }
+
+    const { carpeta } = subirImagenSchema.parse(req.body);
+    const resultados = [];
+
+    for (const archivo of req.files) {
+      // Validar cada archivo
+      if (!validarTipoImagen(archivo.mimetype)) {
+        continue; // Saltar archivos inválidos
+      }
+
+      if (archivo.size > 5 * 1024 * 1024) {
+        continue; // Saltar archivos muy grandes
+      }
+
+      try {
+        const resultado = await subirImagen(archivo, carpeta);
+        resultados.push(resultado);
+      } catch (error) {
+        console.error(`Error al subir ${archivo.originalname}:`, error.message);
+        // Continuar con los demás archivos
+      }
+    }
+
+    res.status(201).json({ 
+      ok: true, 
+      data: resultados,
+      message: `${resultados.length} imágenes subidas exitosamente` 
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -97,18 +154,6 @@ export async function eliminarImagenController(req, res, next) {
         detalles: error.flatten() 
       });
     }
-    next(error);
-  }
-}
-
-export async function listarImagenesController(req, res, next) {
-  try {
-    const result = await listarImagenesCuentos();
-    res.json({ 
-      ok: true, 
-      data: result 
-    });
-  } catch (error) {
     next(error);
   }
 }

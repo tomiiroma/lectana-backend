@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { verificarCapacidadAula } from '../utils/validaciones.js';
 
 export async function unirseAula(usuarioId, codigoAcceso) {
   // Buscar aula por código
@@ -21,6 +22,13 @@ export async function unirseAula(usuarioId, codigoAcceso) {
 
   if (alumnoExistente?.aula_id_aula) {
     throw new Error('El alumno ya está registrado en un aula');
+  }
+
+  // Verificar límite de estudiantes por aula (máximo 50)
+  const hayEspacio = await verificarCapacidadAula(aula.id_aula);
+  
+  if (!hayEspacio) {
+    throw new Error('El aula ha alcanzado el límite máximo de 50 estudiantes');
   }
 
   // Actualizar alumno con el aula

@@ -1,30 +1,15 @@
 import { Router } from 'express';
-import multer from 'multer';
 import { 
-  subirImagenController, 
-  obtenerURLImagenController, 
-  eliminarImagenController, 
-  listarImagenesController 
+  subirImagenController,
+  subirMultipleImagenesController,
+  eliminarImagenController,
+  listarImagenesController,
+  obtenerEstadisticasAlmacenamientoController
 } from '../controllers/imagen.controller.js';
+import { upload, uploadMultiple } from '../services/imagen.service.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
-
-// Configurar multer para manejo de imágenes en memoria
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB máximo para imágenes
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten archivos de imagen (JPG, PNG, WebP)'), false);
-    }
-  }
-});
 
 // Aplicar rate limiting
 router.use((req, res, next) => {
@@ -33,12 +18,29 @@ router.use((req, res, next) => {
   next();
 });
 
-// Rutas públicas para obtener URLs de imágenes
-router.get('/cuento/:id/url', obtenerURLImagenController);
+// Rutas públicas
+router.get('/listar', listarImagenesController);
+router.get('/estadisticas', obtenerEstadisticasAlmacenamientoController);
 
-// Rutas protegidas para administradores
-router.post('/cuento/:id/subir', requireAuth, requireRole('administrador'), upload.single('imagen'), subirImagenController);
-router.delete('/cuento/:id/eliminar', requireAuth, requireRole('administrador'), eliminarImagenController);
-router.get('/listar', requireAuth, requireRole('administrador'), listarImagenesController);
+// Rutas para administradores (subir/eliminar imágenes)
+router.post('/subir', 
+  requireAuth, 
+  requireRole('administrador'), 
+  upload.single('imagen'), 
+  subirImagenController
+);
+
+router.post('/subir-multiple', 
+  requireAuth, 
+  requireRole('administrador'), 
+  uploadMultiple.array('imagenes', 10), // Máximo 10 imágenes
+  subirMultipleImagenesController
+);
+
+router.delete('/eliminar', 
+  requireAuth, 
+  requireRole('administrador'), 
+  eliminarImagenController
+);
 
 export default router;
