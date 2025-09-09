@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { crearAdministradorController, obtenerAdministradorController, actualizarAdministradorController } from '../controllers/administrador.controller.js';
+import { crearAdministradorController, obtenerAdministradorController, actualizarAdministradorController, listarAdministradoresController } from '../controllers/administrador.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -10,6 +11,7 @@ router.use((req, res, next) => {
 });
 
 router.post('/', crearAdministradorController);
+router.get('/', requireAuth, requireRole('administrador'), listarAdministradoresController);
 router.get('/:id', obtenerAdministradorController);
 router.put('/:id', actualizarAdministradorController);
 

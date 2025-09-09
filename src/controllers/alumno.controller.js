@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { unirseAula, obtenerAlumnoPorId, obtenerProgresoAlumno } from '../services/alumno.service.js';
+import { unirseAula, obtenerAlumnoPorId, obtenerProgresoAlumno, listarAlumnos } from '../services/alumno.service.js';
 
 const unirseAulaSchema = z.object({
   codigo_acceso: z.string().min(6).max(10),
@@ -50,6 +50,26 @@ export async function obtenerProgresoController(req, res, next) {
     const result = await obtenerProgresoAlumno(usuarioId);
     res.json({ ok: true, data: result });
   } catch (error) {
+    next(error);
+  }
+}
+
+const listarSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
+  aula_id: z.coerce.number().int().optional()
+});
+
+export async function listarAlumnosController(req, res, next) {
+  try {
+    const params = listarSchema.parse(req.query);
+    const result = await listarAlumnos(params);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
+    }
     next(error);
   }
 }

@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { 
   unirseAulaController, 
   obtenerAlumnoController, 
-  obtenerProgresoController 
+  obtenerProgresoController,
+  listarAlumnosController 
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -19,7 +20,10 @@ router.use((req, res, next) => {
 router.post('/unirse-aula', requireAuth, requireRole('alumno'), unirseAulaController);
 router.get('/progreso', requireAuth, requireRole('alumno'), obtenerProgresoController);
 
-// Ruta pública para obtener datos de alumno (para docentes)
+// Listado (solo administradores)
+router.get('/', requireAuth, requireRole('administrador'), listarAlumnosController);
+
+// Ruta para obtener datos de alumno (docentes/administradores)
 router.get('/:id', requireAuth, requireRole(['docente', 'administrador']), obtenerAlumnoController);
 
 export default router;

@@ -1,6 +1,47 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { verificarCapacidadAula } from '../utils/validaciones.js';
 
+export async function listarAlumnos({ page = 1, limit = 20, q = '', aula_id } = {}) {
+  const from = (Number(page) - 1) * Number(limit);
+  const to = from + Number(limit) - 1;
+
+  let query = supabaseAdmin
+    .from('alumno')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email
+      ),
+      aula:aula_id_aula(
+        id_aula, nombre
+      )
+    `, { count: 'exact' })
+    .range(from, to)
+    .order('usuario_id_usuario', { ascending: true });
+
+  if (q && q.trim()) {
+    // Buscar por nombre/apellido/email del usuario asociado
+    query = query.or(
+      `usuario.nombre.ilike.%${q}%,usuario.apellido.ilike.%${q}%,usuario.email.ilike.%${q}%`
+    );
+  }
+
+  if (aula_id) {
+    query = query.eq('aula_id_aula', aula_id);
+  }
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message);
+
+  return {
+    items: data || [],
+    page: Number(page),
+    limit: Number(limit),
+    total: count || 0,
+    total_pages: count ? Math.ceil(count / Number(limit)) : 0
+  };
+}
+
 export async function unirseAula(usuarioId, codigoAcceso) {
   // Buscar aula por código
   const { data: aula, error: aulaError } = await supabaseAdmin

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearDocente, obtenerDocentePorId, actualizarDocente } from '../services/docente.service.js';
+import { crearDocente, obtenerDocentePorId, actualizarDocente, listarDocentes } from '../services/docente.service.js';
 
 const crearDocenteSchema = z.object({
   dni: z.string().min(6),
@@ -60,6 +60,32 @@ export async function actualizarDocenteController(req, res, next) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    next(error);
+  }
+}
+
+const listarSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional(),
+  verificado: z.union([z.literal('true'), z.literal('false')]).optional()
+});
+
+export async function listarDocentesController(req, res, next) {
+  try {
+    const raw = listarSchema.parse(req.query);
+    const params = {
+      page: raw.page,
+      limit: raw.limit,
+      q: raw.q,
+      verificado: typeof raw.verificado !== 'undefined' ? raw.verificado === 'true' : undefined
+    };
+    const result = await listarDocentes(params);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
     }
     next(error);
   }
