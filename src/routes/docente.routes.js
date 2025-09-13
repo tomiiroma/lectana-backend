@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { crearDocenteController, obtenerDocenteController, actualizarDocenteController, listarDocentesController } from '../controllers/docente.controller.js';
+import { crearDocenteController, listarDocentesController } from '../controllers/docente.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -10,9 +10,10 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/', crearDocenteController);
-router.get('/', requireAuth, requireRole('administrador'), listarDocentesController);
-router.get('/:id', obtenerDocenteController);
-router.put('/:id', actualizarDocenteController);
+// Crear docente (público)
+router.post('/crear-docente', crearDocenteController);
+
+// Listar docentes (solo admin)
+router.get('/admin-listar-docentes', requireAuth, requireRole('administrador'), listarDocentesController);
 
 export default router;

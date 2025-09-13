@@ -10,9 +10,11 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/', crearAdministradorController);
-router.get('/', requireAuth, requireRole('administrador'), listarAdministradoresController);
-router.get('/:id', obtenerAdministradorController);
-router.put('/:id', actualizarAdministradorController);
+router.post('/crear-administrador', crearAdministradorController);
+
+router.get('/listar-administradores', requireAuth, requireRole('administrador'), listarAdministradoresController);
+
+router.get('/obtener-administrador/:id', obtenerAdministradorController);
+router.put('/actualizar-administrador/:id', actualizarAdministradorController);
 
 export default router;

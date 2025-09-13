@@ -1,5 +1,42 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { crearUsuario } from './usuario.service.js';
 
+export async function crearDocente({ nombre, apellido, email, edad, password, dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo }) {
+  // Crear usuario primero
+  const usuario = await crearUsuario({ nombre, apellido, email, edad, password });
+  
+  // Crear docente asociado al usuario
+  const docenteData = {
+    dni,
+    telefono: telefono || '',
+    institucion_nombre: institucion_nombre || '',
+    institucion_pais: institucion_pais || '',
+    institucion_provincia: institucion_provincia || '',
+    nivel_educativo: nivel_educativo || 'PRIMARIA',
+    verificado: true,
+    usuario_id_usuario: usuario.id_usuario
+  };
+
+  const { data: docente, error } = await supabaseAdmin
+    .from('docente')
+    .insert(docenteData)
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad
+      )
+    `)
+    .single();
+
+  if (error) {
+    throw new Error('Error al crear docente: ' + error.message);
+  }
+
+  return {
+    docente,
+    message: 'Docente creado exitosamente'
+  };
+}
 
 export async function listarDocentes({ page = 1, limit = 20, q = '', verificado } = {}) {
   const from = (Number(page) - 1) * Number(limit);
@@ -10,7 +47,7 @@ export async function listarDocentes({ page = 1, limit = 20, q = '', verificado 
     .select(`
       *,
       usuario:usuario_id_usuario(
-        id_usuario, nombre, apellido, email
+        id_usuario, nombre, apellido, email, edad
       )
     `, { count: 'exact' })
     .range(from, to)
@@ -36,44 +73,4 @@ export async function listarDocentes({ page = 1, limit = 20, q = '', verificado 
     total: count || 0,
     total_pages: count ? Math.ceil(count / Number(limit)) : 0
   };
-}
-
-
-
-export async function crearDocente({ dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo, usuario_id_usuario }) {
-  const { data, error } = await supabaseAdmin
-    .from('docente')
-    .insert([{ dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo, usuario_id_usuario }])
-    .select()
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-
-
-export async function obtenerDocentePorId(id_docente) {
-  const { data, error } = await supabaseAdmin
-    .from('docente')
-    .select('*')
-    .eq('id_docente', id_docente)
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-
-
-export async function actualizarDocente(id_docente, updates) {
-  const { data, error } = await supabaseAdmin
-    .from('docente')
-    .update(updates)
-    .eq('id_docente', id_docente)
-    .select()
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
 }

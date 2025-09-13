@@ -1,55 +1,31 @@
 import { z } from 'zod';
-import { unirseAula, obtenerAlumnoPorId, obtenerProgresoAlumno, listarAlumnos } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos } from '../services/alumno.service.js';
 
-const unirseAulaSchema = z.object({
-  codigo_acceso: z.string().min(6).max(10),
+const crearAlumnoSchema = z.object({
+  nombre: z.string().min(2).max(50),
+  apellido: z.string().min(2).max(50),
+  email: z.string().email(),
+  edad: z.number().int().min(5).max(18),
+  password: z.string().min(6),
+  aula_id: z.number().int().optional()
 });
 
-const idSchema = z.object({
-  id: z.string().uuid(),
-});
-
-export async function unirseAulaController(req, res, next) {
+export async function crearAlumnoController(req, res, next) {
   try {
-    const { codigo_acceso } = unirseAulaSchema.parse(req.body);
-    const usuarioId = req.user.sub;
-    
-    const result = await unirseAula(usuarioId, codigo_acceso);
-    res.json({ ok: true, ...result });
+    const data = crearAlumnoSchema.parse(req.body);
+    const result = await crearAlumno(data);
+    res.status(201).json({ ok: true, ...result });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
     }
-    if (String(error.message).toLowerCase().includes('código') || 
-        String(error.message).toLowerCase().includes('ya está')) {
+    if (String(error.message).toLowerCase().includes('email') && 
+        String(error.message).toLowerCase().includes('ya existe')) {
+      return res.status(409).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('límite')) {
       return res.status(400).json({ ok: false, error: error.message });
     }
-    next(error);
-  }
-}
-
-export async function obtenerAlumnoController(req, res, next) {
-  try {
-    const { id } = idSchema.parse(req.params);
-    const result = await obtenerAlumnoPorId(id);
-    res.json({ ok: true, data: result });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
-    }
-    if (String(error.message).toLowerCase().includes('no encontrado')) {
-      return res.status(404).json({ ok: false, error: error.message });
-    }
-    next(error);
-  }
-}
-
-export async function obtenerProgresoController(req, res, next) {
-  try {
-    const usuarioId = req.user.sub;
-    const result = await obtenerProgresoAlumno(usuarioId);
-    res.json({ ok: true, data: result });
-  } catch (error) {
     next(error);
   }
 }

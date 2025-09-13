@@ -1,65 +1,32 @@
 import { z } from 'zod';
-import { crearDocente, obtenerDocentePorId, actualizarDocente, listarDocentes } from '../services/docente.service.js';
+import { crearDocente, listarDocentes } from '../services/docente.service.js';
 
 const crearDocenteSchema = z.object({
+  nombre: z.string().min(2).max(50),
+  apellido: z.string().min(2).max(50),
+  email: z.string().email(),
+  edad: z.number().int().min(18).max(80),
+  password: z.string().min(6),
   dni: z.string().min(6),
   telefono: z.string().optional(),
-  institucion_nombre: z.string().optional(),
-  institucion_pais: z.string().optional(),
-  institucion_provincia: z.string().optional(),
-  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional(),
-  usuario_id_usuario: z.number().int().positive(),
+  institucion_nombre: z.string().min(1),
+  institucion_pais: z.string().min(1),
+  institucion_provincia: z.string().min(1),
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).default('PRIMARIA')
 });
 
 export async function crearDocenteController(req, res, next) {
   try {
-    const payload = crearDocenteSchema.parse(req.body);
-    const docente = await crearDocente(payload);
-    res.status(201).json({ ok: true, docente });
+    const data = crearDocenteSchema.parse(req.body);
+    const result = await crearDocente(data);
+    res.status(201).json({ ok: true, ...result });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
     }
-    next(error);
-  }
-}
-
-const idSchema = z.object({ id: z.coerce.number().int().positive() });
-
-export async function obtenerDocenteController(req, res, next) {
-  try {
-    const { id } = idSchema.parse(req.params);
-    const docente = await obtenerDocentePorId(id);
-    if (!docente) return res.status(404).json({ ok: false, error: 'Docente no encontrado' });
-    res.json({ ok: true, docente });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
-    }
-    next(error);
-  }
-}
-
-const actualizarDocenteSchema = z.object({
-  dni: z.string().min(6).optional(),
-  telefono: z.string().optional(),
-  institucion_nombre: z.string().optional(),
-  institucion_pais: z.string().optional(),
-  institucion_provincia: z.string().optional(),
-  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional(),
-  verificado: z.boolean().optional(),
-  usuario_id_usuario: z.number().int().positive().optional(),
-});
-
-export async function actualizarDocenteController(req, res, next) {
-  try {
-    const { id } = idSchema.parse(req.params);
-    const updates = actualizarDocenteSchema.parse(req.body);
-    const docente = await actualizarDocente(id, updates);
-    res.json({ ok: true, docente });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    if (String(error.message).toLowerCase().includes('email') && 
+        String(error.message).toLowerCase().includes('ya existe')) {
+      return res.status(409).json({ ok: false, error: error.message });
     }
     next(error);
   }

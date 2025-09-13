@@ -17,9 +17,9 @@ router.use((req, res, next) => {
 });
 
 router.post('/login', loginController);
-router.post('/register/alumno', registerAlumnoController);
-router.post('/register/docente', registerDocenteController);
-router.post('/register/administrador', registerAdministradorController);
+router.post('/registro-form-alumno', registerAlumnoController);
+router.post('/registro-form-docente', registerDocenteController);
+router.post('/registro-form-administrador', registerAdministradorController);
 router.get('/me', requireAuth, getMeController);
 
 export default router;
