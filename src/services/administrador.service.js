@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { actualizarUsuario } from './usuario.service.js';
 
 export async function listarAdministradores({ page = 1, limit = 20, q = '' } = {}) {
   const from = (Number(page) - 1) * Number(limit);
@@ -65,4 +66,59 @@ export async function actualizarAdministrador(id_administrador, updates) {
 
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function obtenerPerfilAdministrador(usuarioId) {
+  const { data, error } = await supabaseAdmin
+    .from('administrador')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad
+      )
+    `)
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new Error('Administrador no encontrado');
+    }
+    throw new Error('Error al obtener perfil: ' + error.message);
+  }
+
+  return data;
+}
+
+export async function actualizarPerfilAdministrador(usuarioId, updates) {
+  // Separar campos de usuario y administrador
+  const usuarioUpdates = {};
+  const adminUpdates = {};
+
+  if (updates.nombre) usuarioUpdates.nombre = updates.nombre;
+  if (updates.apellido) usuarioUpdates.apellido = updates.apellido;
+  if (updates.email) usuarioUpdates.email = updates.email;
+  if (updates.edad) usuarioUpdates.edad = updates.edad;
+
+  if (updates.dni) adminUpdates.dni = updates.dni;
+
+  // Actualizar usuario si hay cambios
+  if (Object.keys(usuarioUpdates).length > 0) {
+    await actualizarUsuario(usuarioId, usuarioUpdates);
+  }
+
+  // Actualizar administrador si hay cambios
+  if (Object.keys(adminUpdates).length > 0) {
+    const { error } = await supabaseAdmin
+      .from('administrador')
+      .update(adminUpdates)
+      .eq('usuario_id_usuario', usuarioId);
+
+    if (error) {
+      throw new Error('Error al actualizar datos de administrador: ' + error.message);
+    }
+  }
+
+  // Retornar perfil actualizado
+  return await obtenerPerfilAdministrador(usuarioId);
 }

@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { crearAlumnoController, listarAlumnosController } from '../controllers/alumno.controller.js';
+import { 
+  crearAlumnoController, 
+  listarAlumnosController,
+  obtenerPerfilAlumnoController,
+  actualizarPerfilAlumnoController,
+  obtenerAlumnoPorIdController
+} from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -14,7 +20,12 @@ router.use((req, res, next) => {
 // Crear alumno (público)
 router.post('/crear-alumno', crearAlumnoController);
 
-// Listar alumnos (solo admin)
+// Perfil propio del alumno (autenticado como alumno)
+router.get('/obtener-perfil-alumno', requireAuth, requireRole('alumno'), obtenerPerfilAlumnoController);
+router.put('/actualizar-perfil-alumno', requireAuth, requireRole('alumno'), actualizarPerfilAlumnoController);
+
+// Admin: Listar alumnos y obtener por ID
 router.get('/admin-listar-alumnos', requireAuth, requireRole('administrador'), listarAlumnosController);
+router.get('/admin-obtener-alumno/:id', requireAuth, requireRole('administrador'), obtenerAlumnoPorIdController);
 
 export default router;

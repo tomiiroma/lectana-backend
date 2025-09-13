@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { verificarCapacidadAula } from '../utils/validaciones.js';
-import { crearUsuario } from './usuario.service.js';
+import { crearUsuario, actualizarUsuario } from './usuario.service.js';
 
 export async function crearAlumno({ nombre, apellido, email, edad, password, aula_id }) {
   // Crear usuario primero
@@ -92,5 +92,84 @@ export async function listarAlumnos({ page = 1, limit = 20, q = '', aula_id } = 
     total: count || 0,
     total_pages: count ? Math.ceil(count / Number(limit)) : 0
   };
+}
+
+export async function obtenerPerfilAlumno(usuarioId) {
+  const { data, error } = await supabaseAdmin
+    .from('alumno')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad
+      )
+    `)
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new Error('Alumno no encontrado');
+    }
+    throw new Error('Error al obtener perfil: ' + error.message);
+  }
+
+  return data;
+}
+
+export async function actualizarPerfilAlumno(usuarioId, updates) {
+  // Separar campos de usuario y alumno
+  const usuarioUpdates = {};
+  const alumnoUpdates = {};
+
+  if (updates.nombre) usuarioUpdates.nombre = updates.nombre;
+  if (updates.apellido) usuarioUpdates.apellido = updates.apellido;
+  if (updates.email) usuarioUpdates.email = updates.email;
+  if (updates.edad) usuarioUpdates.edad = updates.edad;
+
+  if (updates.nacionalidad !== undefined) alumnoUpdates.nacionalidad = updates.nacionalidad;
+  if (updates.alumno_col !== undefined) alumnoUpdates.alumno_col = updates.alumno_col;
+  if (updates.aula_id_aula !== undefined) alumnoUpdates.aula_id_aula = updates.aula_id_aula;
+
+  // Actualizar usuario si hay cambios
+  if (Object.keys(usuarioUpdates).length > 0) {
+    await actualizarUsuario(usuarioId, usuarioUpdates);
+  }
+
+  // Actualizar alumno si hay cambios
+  if (Object.keys(alumnoUpdates).length > 0) {
+    const { error } = await supabaseAdmin
+      .from('alumno')
+      .update(alumnoUpdates)
+      .eq('usuario_id_usuario', usuarioId);
+
+    if (error) {
+      throw new Error('Error al actualizar datos de alumno: ' + error.message);
+    }
+  }
+
+  // Retornar perfil actualizado
+  return await obtenerPerfilAlumno(usuarioId);
+}
+
+export async function obtenerAlumnoPorId(alumnoId) {
+  const { data, error } = await supabaseAdmin
+    .from('alumno')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad
+      )
+    `)
+    .eq('id_alumno', alumnoId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new Error('Alumno no encontrado');
+    }
+    throw new Error('Error al obtener alumno: ' + error.message);
+  }
+
+  return data;
 }
 

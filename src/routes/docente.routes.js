@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { crearDocenteController, listarDocentesController } from '../controllers/docente.controller.js';
+import { 
+  crearDocenteController, 
+  listarDocentesController,
+  obtenerPerfilDocenteController,
+  actualizarPerfilDocenteController,
+  obtenerDocentePorIdController
+} from '../controllers/docente.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -13,7 +19,12 @@ router.use((req, res, next) => {
 // Crear docente (público)
 router.post('/crear-docente', crearDocenteController);
 
-// Listar docentes (solo admin)
+// Perfil propio del docente (autenticado como docente)
+router.get('/obtener-perfil-docente', requireAuth, requireRole('docente'), obtenerPerfilDocenteController);
+router.put('/actualizar-perfil-docente', requireAuth, requireRole('docente'), actualizarPerfilDocenteController);
+
+// Admin: Listar docentes y obtener por ID
 router.get('/admin-listar-docentes', requireAuth, requireRole('administrador'), listarDocentesController);
+router.get('/admin-obtener-docente/:id', requireAuth, requireRole('administrador'), obtenerDocentePorIdController);
 
 export default router;

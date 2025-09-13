@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
-import { crearUsuario } from './usuario.service.js';
+import { crearUsuario, actualizarUsuario } from './usuario.service.js';
 
 export async function crearDocente({ nombre, apellido, email, edad, password, dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo }) {
   // Crear usuario primero
@@ -73,4 +73,85 @@ export async function listarDocentes({ page = 1, limit = 20, q = '', verificado 
     total: count || 0,
     total_pages: count ? Math.ceil(count / Number(limit)) : 0
   };
+}
+
+export async function obtenerPerfilDocente(usuarioId) {
+  const { data, error } = await supabaseAdmin
+    .from('docente')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad
+      )
+    `)
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new Error('Docente no encontrado');
+    }
+    throw new Error('Error al obtener perfil: ' + error.message);
+  }
+
+  return data;
+}
+
+export async function actualizarPerfilDocente(usuarioId, updates) {
+  // Separar campos de usuario y docente
+  const usuarioUpdates = {};
+  const docenteUpdates = {};
+
+  if (updates.nombre) usuarioUpdates.nombre = updates.nombre;
+  if (updates.apellido) usuarioUpdates.apellido = updates.apellido;
+  if (updates.email) usuarioUpdates.email = updates.email;
+  if (updates.edad) usuarioUpdates.edad = updates.edad;
+
+  if (updates.telefono !== undefined) docenteUpdates.telefono = updates.telefono;
+  if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
+  if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;
+  if (updates.institucion_provincia) docenteUpdates.institucion_provincia = updates.institucion_provincia;
+  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo;
+
+  // Actualizar usuario si hay cambios
+  if (Object.keys(usuarioUpdates).length > 0) {
+    await actualizarUsuario(usuarioId, usuarioUpdates);
+  }
+
+  // Actualizar docente si hay cambios
+  if (Object.keys(docenteUpdates).length > 0) {
+    const { error } = await supabaseAdmin
+      .from('docente')
+      .update(docenteUpdates)
+      .eq('usuario_id_usuario', usuarioId);
+
+    if (error) {
+      throw new Error('Error al actualizar datos de docente: ' + error.message);
+    }
+  }
+
+  // Retornar perfil actualizado
+  return await obtenerPerfilDocente(usuarioId);
+}
+
+export async function obtenerDocentePorId(docenteId) {
+  const { data, error } = await supabaseAdmin
+    .from('docente')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad
+      )
+    `)
+    .eq('id_docente', docenteId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new Error('Docente no encontrado');
+    }
+    throw new Error('Error al obtener docente: ' + error.message);
+  }
+
+  return data;
 }

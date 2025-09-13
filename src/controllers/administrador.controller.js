@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador, listarAdministradores } from '../services/administrador.service.js';
+import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador, listarAdministradores, obtenerPerfilAdministrador, actualizarPerfilAdministrador } from '../services/administrador.service.js';
 
 const crearAdministradorSchema = z.object({
   dni: z.string().min(6),
@@ -68,6 +68,44 @@ export async function listarAdministradoresController(req, res, next) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
+    }
+    next(error);
+  }
+}
+
+export async function obtenerPerfilAdministradorController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub;
+    const result = await obtenerPerfilAdministrador(usuarioId);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+const actualizarPerfilSchema = z.object({
+  nombre: z.string().min(2).max(50).optional(),
+  apellido: z.string().min(2).max(50).optional(),
+  email: z.string().email().optional(),
+  edad: z.number().int().min(18).max(80).optional(),
+  dni: z.string().min(6).optional()
+});
+
+export async function actualizarPerfilAdministradorController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub;
+    const updates = actualizarPerfilSchema.parse(req.body);
+    const result = await actualizarPerfilAdministrador(usuarioId, updates);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
     }
     next(error);
   }

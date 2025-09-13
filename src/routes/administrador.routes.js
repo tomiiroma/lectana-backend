@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { crearAdministradorController, obtenerAdministradorController, actualizarAdministradorController, listarAdministradoresController } from '../controllers/administrador.controller.js';
+import { 
+  crearAdministradorController, 
+  obtenerAdministradorController, 
+  actualizarAdministradorController, 
+  listarAdministradoresController,
+  obtenerPerfilAdministradorController,
+  actualizarPerfilAdministradorController
+} from '../controllers/administrador.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -10,11 +17,16 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/crear-administrador', crearAdministradorController);
+// Crear administrador (solo admin)
+router.post('/crear-administrador', requireAuth, requireRole('administrador'), crearAdministradorController);
 
-router.get('/listar-administradores', requireAuth, requireRole('administrador'), listarAdministradoresController);
+// Perfil propio del administrador (autenticado como administrador)
+router.get('/obtener-perfil-administrador', requireAuth, requireRole('administrador'), obtenerPerfilAdministradorController);
+router.put('/actualizar-perfil-administrador', requireAuth, requireRole('administrador'), actualizarPerfilAdministradorController);
 
-router.get('/obtener-administrador/:id', obtenerAdministradorController);
-router.put('/actualizar-administrador/:id', actualizarAdministradorController);
+// Admin: Listar administradores y obtener por ID
+router.get('/admin-listar-administradores', requireAuth, requireRole('administrador'), listarAdministradoresController);
+router.get('/admin-obtener-administrador/:id', requireAuth, requireRole('administrador'), obtenerAdministradorController);
+router.put('/admin-actualizar-administrador/:id', requireAuth, requireRole('administrador'), actualizarAdministradorController);
 
 export default router;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearDocente, listarDocentes } from '../services/docente.service.js';
+import { crearDocente, listarDocentes, obtenerPerfilDocente, actualizarPerfilDocente, obtenerDocentePorId } from '../services/docente.service.js';
 
 const crearDocenteSchema = z.object({
   nombre: z.string().min(2).max(50),
@@ -53,6 +53,66 @@ export async function listarDocentesController(req, res, next) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
+    }
+    next(error);
+  }
+}
+
+const idSchema = z.object({ id: z.coerce.number().int().positive() });
+
+export async function obtenerPerfilDocenteController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub;
+    const result = await obtenerPerfilDocente(usuarioId);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+const actualizarPerfilSchema = z.object({
+  nombre: z.string().min(2).max(50).optional(),
+  apellido: z.string().min(2).max(50).optional(),
+  email: z.string().email().optional(),
+  edad: z.number().int().min(18).max(80).optional(),
+  telefono: z.string().optional(),
+  institucion_nombre: z.string().min(1).optional(),
+  institucion_pais: z.string().min(1).optional(),
+  institucion_provincia: z.string().min(1).optional(),
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional()
+});
+
+export async function actualizarPerfilDocenteController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub;
+    const updates = actualizarPerfilSchema.parse(req.body);
+    const result = await actualizarPerfilDocente(usuarioId, updates);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+export async function obtenerDocentePorIdController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const result = await obtenerDocentePorId(id);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
     }
     next(error);
   }
