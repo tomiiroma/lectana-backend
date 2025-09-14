@@ -10,7 +10,7 @@ export async function listarAdministradores({ page = 1, limit = 20, q = '', acti
     .select(`
       *,
       usuario:usuario_id_usuario(
-        id_usuario, nombre, apellido, email
+        id_usuario, nombre, apellido, email, activo
       )
     `, { count: 'exact' })
     .range(from, to)
@@ -39,6 +39,28 @@ export async function listarAdministradores({ page = 1, limit = 20, q = '', acti
 }
 
 export async function crearAdministrador({ dni, usuario_id_usuario }) {
+  // Verificar que el usuario existe
+  const { data: usuario, error: usuarioError } = await supabaseAdmin
+    .from('usuario')
+    .select('id_usuario')
+    .eq('id_usuario', usuario_id_usuario)
+    .single();
+
+  if (usuarioError || !usuario) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  // Verificar que el usuario no sea ya administrador
+  const { data: adminExistente } = await supabaseAdmin
+    .from('administrador')
+    .select('id_administrador')
+    .eq('usuario_id_usuario', usuario_id_usuario)
+    .maybeSingle();
+
+  if (adminExistente) {
+    throw new Error('Este usuario ya es administrador');
+  }
+
   const { data, error } = await supabaseAdmin
     .from('administrador')
     .insert([{ dni, usuario_id_usuario }])

@@ -7,7 +7,7 @@ const crearAlumnoSchema = z.object({
   email: z.string().email(),
   edad: z.number().int().min(5).max(18),
   password: z.string().min(6),
-  aula_id: z.number().int().optional()
+  aula_id: z.number().int().nullable().optional()
 });
 
 export async function crearAlumnoController(req, res, next) {

@@ -15,6 +15,12 @@ export async function crearAdministradorController(req, res, next) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
     }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('ya es administrador')) {
+      return res.status(409).json({ ok: false, error: error.message });
+    }
     next(error);
   }
 }
