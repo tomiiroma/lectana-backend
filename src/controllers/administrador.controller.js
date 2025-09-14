@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador, listarAdministradores, obtenerPerfilAdministrador, actualizarPerfilAdministrador } from '../services/administrador.service.js';
+import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador, listarAdministradores, obtenerPerfilAdministrador, actualizarPerfilAdministrador, obtenerEstadisticasUsuarios, obtenerTodosUsuariosActivos, obtenerTodosUsuariosInactivos } from '../services/administrador.service.js';
 
 const crearAdministradorSchema = z.object({
   dni: z.string().min(6),
@@ -57,7 +57,8 @@ export async function actualizarAdministradorController(req, res, next) {
 const listarSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
-  q: z.string().optional()
+  q: z.string().optional(),
+  activo: z.union([z.literal('true'), z.literal('false')]).optional()
 });
 
 export async function listarAdministradoresController(req, res, next) {
@@ -106,6 +107,47 @@ export async function actualizarPerfilAdministradorController(req, res, next) {
     }
     if (String(error.message).toLowerCase().includes('no encontrado')) {
       return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+export async function obtenerEstadisticasUsuariosController(req, res, next) {
+  try {
+    const result = await obtenerEstadisticasUsuarios();
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+const listarTodosSchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  q: z.string().optional()
+});
+
+export async function obtenerTodosUsuariosActivosController(req, res, next) {
+  try {
+    const params = listarTodosSchema.parse(req.query);
+    const result = await obtenerTodosUsuariosActivos(params);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
+    }
+    next(error);
+  }
+}
+
+export async function obtenerTodosUsuariosInactivosController(req, res, next) {
+  try {
+    const params = listarTodosSchema.parse(req.query);
+    const result = await obtenerTodosUsuariosInactivos(params);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
     }
     next(error);
   }

@@ -34,7 +34,8 @@ const listarSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().optional(),
-  aula_id: z.coerce.number().int().optional()
+  aula_id: z.coerce.number().int().optional(),
+  activo: z.union([z.literal('true'), z.literal('false')]).optional()
 });
 
 export async function listarAlumnosController(req, res, next) {

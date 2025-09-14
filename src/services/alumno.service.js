@@ -20,7 +20,7 @@ export async function crearAlumno({ nombre, apellido, email, edad, password, aul
     .select(`
       *,
       usuario:usuario_id_usuario(
-        id_usuario, nombre, apellido, email, edad
+        id_usuario, nombre, apellido, email, edad, activo
       )
     `)
     .single();
@@ -57,7 +57,7 @@ export async function crearAlumno({ nombre, apellido, email, edad, password, aul
   };
 }
 
-export async function listarAlumnos({ page = 1, limit = 20, q = '', aula_id } = {}) {
+export async function listarAlumnos({ page = 1, limit = 20, q = '', aula_id, activo } = {}) {
   const from = (Number(page) - 1) * Number(limit);
   const to = from + Number(limit) - 1;
 
@@ -66,7 +66,7 @@ export async function listarAlumnos({ page = 1, limit = 20, q = '', aula_id } = 
     .select(`
       *,
       usuario:usuario_id_usuario(
-        id_usuario, nombre, apellido, email, edad
+        id_usuario, nombre, apellido, email, edad, activo
       )
     `, { count: 'exact' })
     .range(from, to)
@@ -80,6 +80,10 @@ export async function listarAlumnos({ page = 1, limit = 20, q = '', aula_id } = 
 
   if (aula_id) {
     query = query.eq('aula_id_aula', aula_id);
+  }
+
+  if (typeof activo === 'boolean') {
+    query = query.eq('usuario.activo', activo);
   }
 
   const { data, error, count } = await query;
@@ -100,7 +104,7 @@ export async function obtenerPerfilAlumno(usuarioId) {
     .select(`
       *,
       usuario:usuario_id_usuario(
-        id_usuario, nombre, apellido, email, edad
+        id_usuario, nombre, apellido, email, edad, activo
       )
     `)
     .eq('usuario_id_usuario', usuarioId)
@@ -157,7 +161,7 @@ export async function obtenerAlumnoPorId(alumnoId) {
     .select(`
       *,
       usuario:usuario_id_usuario(
-        id_usuario, nombre, apellido, email, edad
+        id_usuario, nombre, apellido, email, edad, activo
       )
     `)
     .eq('id_alumno', alumnoId)

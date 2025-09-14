@@ -36,7 +36,8 @@ const listarSchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   q: z.string().optional(),
-  verificado: z.union([z.literal('true'), z.literal('false')]).optional()
+  verificado: z.union([z.literal('true'), z.literal('false')]).optional(),
+  activo: z.union([z.literal('true'), z.literal('false')]).optional()
 });
 
 export async function listarDocentesController(req, res, next) {
@@ -46,7 +47,8 @@ export async function listarDocentesController(req, res, next) {
       page: raw.page,
       limit: raw.limit,
       q: raw.q,
-      verificado: typeof raw.verificado !== 'undefined' ? raw.verificado === 'true' : undefined
+      verificado: typeof raw.verificado !== 'undefined' ? raw.verificado === 'true' : undefined,
+      activo: typeof raw.activo !== 'undefined' ? raw.activo === 'true' : undefined
     };
     const result = await listarDocentes(params);
     res.json({ ok: true, data: result });
