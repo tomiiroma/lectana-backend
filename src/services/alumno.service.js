@@ -177,3 +177,50 @@ export async function obtenerAlumnoPorId(alumnoId) {
   return data;
 }
 
+export async function adminActualizarAlumno(alumnoId, updates) {
+  // Obtener el alumno para acceder al usuario_id_usuario
+  const { data: alumno, error: alumnoError } = await supabaseAdmin
+    .from('alumno')
+    .select('usuario_id_usuario')
+    .eq('id_alumno', alumnoId)
+    .single();
+
+  if (alumnoError || !alumno) {
+    throw new Error('Alumno no encontrado');
+  }
+
+  // Separar campos de usuario y alumno
+  const usuarioUpdates = {};
+  const alumnoUpdates = {};
+
+  if (updates.nombre) usuarioUpdates.nombre = updates.nombre;
+  if (updates.apellido) usuarioUpdates.apellido = updates.apellido;
+  if (updates.email) usuarioUpdates.email = updates.email;
+  if (updates.edad) usuarioUpdates.edad = updates.edad;
+  if (updates.activo !== undefined) usuarioUpdates.activo = updates.activo;
+
+  if (updates.nacionalidad !== undefined) alumnoUpdates.nacionalidad = updates.nacionalidad;
+  if (updates.alumno_col !== undefined) alumnoUpdates.alumno_col = updates.alumno_col;
+  if (updates.aula_id_aula !== undefined) alumnoUpdates.aula_id_aula = updates.aula_id_aula;
+
+  // Actualizar usuario si hay cambios
+  if (Object.keys(usuarioUpdates).length > 0) {
+    await actualizarUsuario(alumno.usuario_id_usuario, usuarioUpdates);
+  }
+
+  // Actualizar alumno si hay cambios
+  if (Object.keys(alumnoUpdates).length > 0) {
+    const { error } = await supabaseAdmin
+      .from('alumno')
+      .update(alumnoUpdates)
+      .eq('id_alumno', alumnoId);
+
+    if (error) {
+      throw new Error('Error al actualizar datos de alumno: ' + error.message);
+    }
+  }
+
+  // Retornar alumno actualizado
+  return await obtenerAlumnoPorId(alumnoId);
+}
+

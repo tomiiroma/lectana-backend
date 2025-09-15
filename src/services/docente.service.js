@@ -159,3 +159,53 @@ export async function obtenerDocentePorId(docenteId) {
 
   return data;
 }
+
+export async function adminActualizarDocente(docenteId, updates) {
+  // Obtener el docente para acceder al usuario_id_usuario
+  const { data: docente, error: docenteError } = await supabaseAdmin
+    .from('docente')
+    .select('usuario_id_usuario')
+    .eq('id_docente', docenteId)
+    .single();
+
+  if (docenteError || !docente) {
+    throw new Error('Docente no encontrado');
+  }
+
+  // Separar campos de usuario y docente
+  const usuarioUpdates = {};
+  const docenteUpdates = {};
+
+  if (updates.nombre) usuarioUpdates.nombre = updates.nombre;
+  if (updates.apellido) usuarioUpdates.apellido = updates.apellido;
+  if (updates.email) usuarioUpdates.email = updates.email;
+  if (updates.edad) usuarioUpdates.edad = updates.edad;
+  if (updates.activo !== undefined) usuarioUpdates.activo = updates.activo;
+
+  if (updates.telefono !== undefined) docenteUpdates.telefono = updates.telefono;
+  if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
+  if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;
+  if (updates.institucion_provincia) docenteUpdates.institucion_provincia = updates.institucion_provincia;
+  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo;
+  if (updates.verificado !== undefined) docenteUpdates.verificado = updates.verificado;
+
+  // Actualizar usuario si hay cambios
+  if (Object.keys(usuarioUpdates).length > 0) {
+    await actualizarUsuario(docente.usuario_id_usuario, usuarioUpdates);
+  }
+
+  // Actualizar docente si hay cambios
+  if (Object.keys(docenteUpdates).length > 0) {
+    const { error } = await supabaseAdmin
+      .from('docente')
+      .update(docenteUpdates)
+      .eq('id_docente', docenteId);
+
+    if (error) {
+      throw new Error('Error al actualizar datos de docente: ' + error.message);
+    }
+  }
+
+  // Retornar docente actualizado
+  return await obtenerDocentePorId(docenteId);
+}

@@ -2,13 +2,13 @@ import { Router } from 'express';
 import { 
   crearAdministradorController, 
   obtenerAdministradorController, 
-  actualizarAdministradorController, 
   listarAdministradoresController,
   obtenerPerfilAdministradorController,
   actualizarPerfilAdministradorController,
   obtenerEstadisticasUsuariosController,
   obtenerTodosUsuariosActivosController,
-  obtenerTodosUsuariosInactivosController
+  obtenerTodosUsuariosInactivosController,
+  adminActualizarAdministradorController
 } from '../controllers/administrador.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -30,7 +30,7 @@ router.put('/actualizar-perfil-administrador', requireAuth, requireRole('adminis
 // Admin: Listar administradores y obtener por ID
 router.get('/admin-listar-administradores', requireAuth, requireRole('administrador'), listarAdministradoresController);
 router.get('/admin-obtener-administrador/:id', requireAuth, requireRole('administrador'), obtenerAdministradorController);
-router.put('/admin-actualizar-administrador/:id', requireAuth, requireRole('administrador'), actualizarAdministradorController);
+router.put('/admin-actualizar-administrador/:id', requireAuth, requireRole('administrador'), adminActualizarAdministradorController);
 
 // Estadísticas de usuarios
 router.get('/estadisticas-usuarios', requireAuth, requireRole('administrador'), obtenerEstadisticasUsuariosController);

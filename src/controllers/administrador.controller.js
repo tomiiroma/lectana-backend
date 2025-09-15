@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador, listarAdministradores, obtenerPerfilAdministrador, actualizarPerfilAdministrador, obtenerEstadisticasUsuarios, obtenerTodosUsuariosActivos, obtenerTodosUsuariosInactivos } from '../services/administrador.service.js';
+import { crearAdministrador, obtenerAdministradorPorId, actualizarAdministrador, listarAdministradores, obtenerPerfilAdministrador, actualizarPerfilAdministrador, obtenerEstadisticasUsuarios, obtenerTodosUsuariosActivos, obtenerTodosUsuariosInactivos, adminActualizarAdministrador } from '../services/administrador.service.js';
 
 const crearAdministradorSchema = z.object({
   dni: z.string().min(6),
@@ -44,6 +44,17 @@ export async function obtenerAdministradorController(req, res, next) {
 const actualizarAdministradorSchema = z.object({
   dni: z.string().min(6).optional(),
   usuario_id_usuario: z.number().int().positive().optional(),
+});
+
+const adminActualizarAdministradorSchema = z.object({
+  // Campos de usuario
+  nombre: z.string().min(2).max(50).optional(),
+  apellido: z.string().min(2).max(50).optional(),
+  email: z.string().email().optional(),
+  edad: z.number().int().min(18).max(120).optional(),
+  activo: z.boolean().optional(),
+  // Campos específicos de administrador
+  dni: z.string().min(6).optional()
 });
 
 export async function actualizarAdministradorController(req, res, next) {
@@ -123,6 +134,23 @@ export async function obtenerEstadisticasUsuariosController(req, res, next) {
     const result = await obtenerEstadisticasUsuarios();
     res.json({ ok: true, data: result });
   } catch (error) {
+    next(error);
+  }
+}
+
+export async function adminActualizarAdministradorController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const updates = adminActualizarAdministradorSchema.parse(req.body);
+    const result = await adminActualizarAdministrador(id, updates);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
     next(error);
   }
 }

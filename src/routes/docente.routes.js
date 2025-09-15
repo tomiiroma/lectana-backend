@@ -4,7 +4,8 @@ import {
   listarDocentesController,
   obtenerPerfilDocenteController,
   actualizarPerfilDocenteController,
-  obtenerDocentePorIdController
+  obtenerDocentePorIdController,
+  adminActualizarDocenteController
 } from '../controllers/docente.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -26,5 +27,6 @@ router.put('/actualizar-perfil-docente', requireAuth, requireRole('docente'), ac
 // Admin: Listar docentes y obtener por ID
 router.get('/admin-listar-docentes', requireAuth, requireRole('administrador'), listarDocentesController);
 router.get('/admin-obtener-docente/:id', requireAuth, requireRole('administrador'), obtenerDocentePorIdController);
+router.put('/admin-actualizar-docente/:id', requireAuth, requireRole('administrador'), adminActualizarDocenteController);
 
 export default router;

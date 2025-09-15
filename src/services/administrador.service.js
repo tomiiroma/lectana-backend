@@ -74,7 +74,12 @@ export async function crearAdministrador({ dni, usuario_id_usuario }) {
 export async function obtenerAdministradorPorId(id_administrador) {
   const { data, error } = await supabaseAdmin
     .from('administrador')
-    .select('*')
+    .select(`
+      *,
+      usuario:usuario_id_usuario(
+        id_usuario, nombre, apellido, email, edad, activo
+      )
+    `)
     .eq('id_administrador', id_administrador)
     .single();
 
@@ -391,4 +396,49 @@ export async function obtenerTodosUsuariosInactivos({ page = 1, limit = 20, q = 
     total: count || 0,
     total_pages: count ? Math.ceil(count / Number(limit)) : 0
   };
+}
+
+export async function adminActualizarAdministrador(administradorId, updates) {
+  // Obtener el administrador para acceder al usuario_id_usuario
+  const { data: administrador, error: adminError } = await supabaseAdmin
+    .from('administrador')
+    .select('usuario_id_usuario')
+    .eq('id_administrador', administradorId)
+    .single();
+
+  if (adminError || !administrador) {
+    throw new Error('Administrador no encontrado');
+  }
+
+  // Separar campos de usuario y administrador
+  const usuarioUpdates = {};
+  const adminUpdates = {};
+
+  if (updates.nombre) usuarioUpdates.nombre = updates.nombre;
+  if (updates.apellido) usuarioUpdates.apellido = updates.apellido;
+  if (updates.email) usuarioUpdates.email = updates.email;
+  if (updates.edad) usuarioUpdates.edad = updates.edad;
+  if (updates.activo !== undefined) usuarioUpdates.activo = updates.activo;
+
+  if (updates.dni) adminUpdates.dni = updates.dni;
+
+  // Actualizar usuario si hay cambios
+  if (Object.keys(usuarioUpdates).length > 0) {
+    await actualizarUsuario(administrador.usuario_id_usuario, usuarioUpdates);
+  }
+
+  // Actualizar administrador si hay cambios
+  if (Object.keys(adminUpdates).length > 0) {
+    const { error } = await supabaseAdmin
+      .from('administrador')
+      .update(adminUpdates)
+      .eq('id_administrador', administradorId);
+
+    if (error) {
+      throw new Error('Error al actualizar datos de administrador: ' + error.message);
+    }
+  }
+
+  // Retornar administrador actualizado
+  return await obtenerAdministradorPorId(administradorId);
 }

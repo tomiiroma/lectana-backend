@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno } from '../services/alumno.service.js';
 
 const crearAlumnoSchema = z.object({
   nombre: z.string().min(2).max(50),
@@ -101,6 +101,36 @@ export async function obtenerAlumnoPorIdController(req, res, next) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Parámetros inválidos', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+const adminActualizarAlumnoSchema = z.object({
+  // Campos de usuario
+  nombre: z.string().min(2).max(50).optional(),
+  apellido: z.string().min(2).max(50).optional(),
+  email: z.string().email().optional(),
+  edad: z.number().int().min(5).max(18).optional(),
+  activo: z.boolean().optional(),
+  // Campos específicos de alumno
+  nacionalidad: z.string().optional(),
+  alumno_col: z.string().optional(),
+  aula_id_aula: z.number().int().nullable().optional()
+});
+
+export async function adminActualizarAlumnoController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const updates = adminActualizarAlumnoSchema.parse(req.body);
+    const result = await adminActualizarAlumno(id, updates);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
     }
     if (String(error.message).toLowerCase().includes('no encontrado')) {
       return res.status(404).json({ ok: false, error: error.message });
