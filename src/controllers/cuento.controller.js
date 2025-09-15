@@ -5,6 +5,7 @@ import {
   listarCuentos, 
   actualizarCuento, 
   eliminarCuento,
+  contarCuentos,
 } from '../services/cuento.service.js';
 
 const crearCuentoSchema = z.object({
@@ -95,6 +96,15 @@ export async function eliminarCuentoController(req, res, next) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
     }
+    next(error);
+  }
+}
+
+export async function estadisticasCuentosController(req, res, next) {
+  try {
+    const total = await contarCuentos();
+    res.json({ ok: true, data: { total } });
+  } catch (error) {
     next(error);
   }
 }

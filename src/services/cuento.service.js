@@ -99,6 +99,18 @@ export async function eliminarCuento(id) {
   return { message: 'Cuento eliminado exitosamente' };
 }
 
+export async function contarCuentos() {
+  const { count, error } = await supabaseAdmin
+    .from('cuento')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    throw new Error(`Error al contar cuentos: ${error.message}`);
+  }
+
+  return count ?? 0;
+}
+
 export async function obtenerCuentosPorAula(aulaId) {
   const { data: cuentos, error } = await supabaseAdmin
     .from('cuento_asignado')
