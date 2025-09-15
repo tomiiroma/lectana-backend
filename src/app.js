@@ -12,6 +12,11 @@ import docenteRouter from './routes/docente.routes.js';
 import administradorRouter from './routes/administrador.routes.js';
 import authRouter from './routes/auth.routes.js';
 import alumnoRouter from './routes/alumno.routes.js';
+import autorRouter from './routes/autor.routes.js';
+import generoRouter from './routes/genero.routes.js';
+import cuentoRouter from './routes/cuento.routes.js';
+import imagenRouter from './routes/imagen.routes.js';
+import archivoRouter from './routes/archivo.routes.js';
 
 
 
@@ -53,6 +58,11 @@ app.use('/api/docentes', docenteRouter);
 app.use('/api/administradores', administradorRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/alumnos', alumnoRouter);
+app.use('/api/autores', autorRouter);
+app.use('/api/generos', generoRouter);
+app.use('/api/cuentos', cuentoRouter);
+app.use('/api/imagenes', imagenRouter);
+app.use('/api', archivoRouter);
 
 
 

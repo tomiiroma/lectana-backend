@@ -36,9 +36,10 @@ export async function listarCuentos(filtros = {}) {
   let query = supabaseAdmin
     .from('cuento')
     .select(`
-      *,
-      genero:genero_id_genero(*),
-      autor:autor_id_autor(*)
+      titulo,
+      edad_publico,
+      autor:autor_id_autor(nombre, apellido),
+      genero:genero_id_genero(nombre)
     `);
 
   // Aplicar filtros
@@ -57,13 +58,9 @@ export async function listarCuentos(filtros = {}) {
   if (filtros.titulo) {
     query = query.ilike('titulo', `%${filtros.titulo}%`);
   }
-  
-  if (filtros.activo !== undefined) {
-    query = query.eq('activo', filtros.activo);
-  }
 
-  // Ordenar por fecha de creación
-  query = query.order('fecha_creacion', { ascending: false });
+  // Ordenar por título ascendente por defecto
+  query = query.order('titulo', { ascending: true });
 
   const { data: cuentos, error } = await query;
 

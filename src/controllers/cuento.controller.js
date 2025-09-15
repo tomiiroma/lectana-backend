@@ -5,32 +5,29 @@ import {
   listarCuentos, 
   actualizarCuento, 
   eliminarCuento,
-  obtenerCuentosPorAula 
 } from '../services/cuento.service.js';
 
 const crearCuentoSchema = z.object({
   titulo: z.string().min(1),
-  contenido: z.string().min(1),
-  edad_publico: z.number().int().min(5).max(120),
-  genero_id_genero: z.string().uuid(),
-  autor_id_autor: z.string().uuid(),
-  fuente: z.string().optional(),
-  estado_legal: z.enum(['dominio_publico', 'licencia', 'propietario']).default('dominio_publico'),
-  activo: z.boolean().default(true)
+  edad_publico: z.number().int().min(4).max(18),
+  url_img: z.string().url().optional(),
+  duracion: z.number().int().positive().optional(),
+  autor_id_autor: z.number().int().positive(),
+  genero_id_genero: z.number().int().positive(),
+  pdf_url: z.string().url().optional(),
 });
 
 const actualizarCuentoSchema = crearCuentoSchema.partial();
 
 const listarCuentosSchema = z.object({
   edad_publico: z.string().transform(val => val ? parseInt(val) : undefined).optional(),
-  genero_id: z.string().uuid().optional(),
-  autor_id: z.string().uuid().optional(),
+  genero_id: z.string().transform(val => val ? parseInt(val) : undefined).optional(),
+  autor_id: z.string().transform(val => val ? parseInt(val) : undefined).optional(),
   titulo: z.string().optional(),
-  activo: z.string().transform(val => val === 'true' ? true : val === 'false' ? false : undefined).optional()
 });
 
 const idSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
 });
 
 export async function crearCuentoController(req, res, next) {
@@ -102,15 +99,4 @@ export async function eliminarCuentoController(req, res, next) {
   }
 }
 
-export async function obtenerCuentosPorAulaController(req, res, next) {
-  try {
-    const { id } = idSchema.parse(req.params);
-    const result = await obtenerCuentosPorAula(id);
-    res.json({ ok: true, data: result });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
-    }
-    next(error);
-  }
-}
+// Sin controlador por aula en el nuevo esquema

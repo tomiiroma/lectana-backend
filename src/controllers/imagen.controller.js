@@ -4,7 +4,9 @@ import {
   eliminarImagen, 
   listarImagenes, 
   obtenerEstadisticasAlmacenamiento,
-  validarTipoImagen 
+  validarTipoImagen,
+  subirImagenCuento,
+  subirImagenYAsociarCuento 
 } from '../services/imagen.service.js';
 
 const subirImagenSchema = z.object({
@@ -55,6 +57,53 @@ export async function subirImagenController(req, res, next) {
         detalles: error.flatten() 
       });
     }
+    next(error);
+  }
+}
+
+export async function subirImagenCuentoController(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ ok: false, error: 'No se proporcionó ningún archivo' });
+    }
+
+    if (!['image/jpeg','image/jpg','image/png'].includes(req.file.mimetype)) {
+      return res.status(400).json({ ok: false, error: 'Solo se aceptan JPG o PNG' });
+    }
+
+    if (req.file.size > 10 * 1024 * 1024) {
+      return res.status(400).json({ ok: false, error: 'El archivo es demasiado grande. Máximo 10MB' });
+    }
+
+    const resultado = await subirImagenCuento(req.file);
+    res.status(201).json({ ok: true, data: resultado, message: 'Imagen subida exitosamente' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function uploadImagenYAsociarCuentoController(req, res, next) {
+  try {
+    const cuentoId = req.params.id;
+    if (!cuentoId) {
+      return res.status(400).json({ ok: false, error: 'ID de cuento requerido' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ ok: false, error: 'No se proporcionó ningún archivo' });
+    }
+
+    if (!['image/jpeg','image/jpg','image/png'].includes(req.file.mimetype)) {
+      return res.status(400).json({ ok: false, error: 'Solo se aceptan JPG o PNG' });
+    }
+
+    if (req.file.size > 10 * 1024 * 1024) {
+      return res.status(400).json({ ok: false, error: 'El archivo es demasiado grande. Máximo 10MB' });
+    }
+
+    const resultado = await subirImagenYAsociarCuento(cuentoId, req.file);
+    res.status(201).json({ ok: true, data: resultado, message: 'Imagen subida y asociada exitosamente' });
+  } catch (error) {
     next(error);
   }
 }

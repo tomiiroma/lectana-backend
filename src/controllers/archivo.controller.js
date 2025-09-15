@@ -7,7 +7,7 @@ import {
 } from '../services/archivo.service.js';
 
 const idSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
 });
 
 export async function subirPDFController(req, res, next) {
@@ -29,7 +29,7 @@ export async function subirPDFController(req, res, next) {
       });
     }
 
-    // Validar tamaño (máximo 10MB como dice en los requisitos)
+    // Validar tamaño (máximo 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (req.file.size > maxSize) {
       return res.status(400).json({ 

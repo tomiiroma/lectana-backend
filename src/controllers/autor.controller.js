@@ -9,17 +9,13 @@ import {
 
 const crearAutorSchema = z.object({
   nombre: z.string().min(1),
-  biografia: z.string().optional(),
-  nacionalidad: z.string().optional(),
-  fecha_nacimiento: z.string().optional(),
-  fecha_fallecimiento: z.string().optional(),
-  activo: z.boolean().default(true)
+  apellido: z.string().min(1),
 });
 
 const actualizarAutorSchema = crearAutorSchema.partial();
 
 const idSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
 });
 
 export async function crearAutorController(req, res, next) {

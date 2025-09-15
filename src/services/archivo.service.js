@@ -2,13 +2,16 @@ import { supabaseAdmin } from '../config/supabase.js';
 
 export async function subirPDFCuento(cuentoId, archivoBuffer, nombreArchivo) {
   try {
-    // Subir archivo a Supabase Storage
+    const now = new Date();
+    const carpeta = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}`;
+    const path = `${carpeta}/cuento-${cuentoId}.pdf`;
+
     const { data, error } = await supabaseAdmin.storage
       .from('cuentos-pdfs')
-      .upload(`cuento-${cuentoId}.pdf`, archivoBuffer, {
+      .upload(path, archivoBuffer, {
         contentType: 'application/pdf',
         cacheControl: '3600',
-        upsert: true // Sobrescribir si existe
+        upsert: true
       });
 
     if (error) {

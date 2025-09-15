@@ -78,6 +78,59 @@ export async function subirImagen(archivo, carpeta = 'items') {
   }
 }
 
+// Subir imagen de cuento al bucket cuentos-imagenes
+export async function subirImagenCuento(archivo) {
+  try {
+    const extension = path.extname(archivo.originalname).toLowerCase();
+    const nombreUnico = `${Date.now()}-${Math.round(Math.random() * 1E9)}${extension}`;
+    const rutaCompleta = `${new Date().getFullYear()}/${String(new Date().getMonth()+1).padStart(2,'0')}/${nombreUnico}`;
+
+    const { data, error } = await supabaseAdmin.storage
+      .from('cuentos-imagenes')
+      .upload(rutaCompleta, archivo.buffer, {
+        contentType: archivo.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      throw new Error(`Error al subir imagen: ${error.message}`);
+    }
+
+    const { data: urlData } = supabaseAdmin.storage
+      .from('cuentos-imagenes')
+      .getPublicUrl(data.path);
+
+    return {
+      path: data.path,
+      url: urlData.publicUrl,
+      size: archivo.size,
+      mime: archivo.mimetype
+    };
+  } catch (error) {
+    throw new Error(`Error al procesar imagen de cuento: ${error.message}`);
+  }
+}
+
+export async function subirImagenYAsociarCuento(cuentoId, archivo) {
+  try {
+    const resultado = await subirImagenCuento(archivo);
+
+    const { error: updateError } = await supabaseAdmin
+      .from('cuento')
+      .update({ url_img: resultado.url })
+      .eq('id_cuento', cuentoId);
+
+    if (updateError) {
+      throw new Error(`Error al actualizar cuento: ${updateError.message}`);
+    }
+
+    return resultado;
+  } catch (error) {
+    throw new Error(`Error al asociar imagen al cuento: ${error.message}`);
+  }
+}
+
 /**
  * Eliminar imagen de Supabase Storage
  */

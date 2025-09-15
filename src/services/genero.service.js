@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 export async function crearGenero(data) {
   const { data: genero, error } = await supabaseAdmin
     .from('genero')
-    .insert(data)
+    .insert({ nombre: data.nombre })
     .select('*')
     .single();
 

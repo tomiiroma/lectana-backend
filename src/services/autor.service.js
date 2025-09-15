@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 export async function crearAutor(data) {
   const { data: autor, error } = await supabaseAdmin
     .from('autor')
-    .insert(data)
+    .insert({ nombre: data.nombre, apellido: data.apellido })
     .select('*')
     .single();
 

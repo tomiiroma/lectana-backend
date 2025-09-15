@@ -9,14 +9,12 @@ import {
 
 const crearGeneroSchema = z.object({
   nombre: z.string().min(1),
-  descripcion: z.string().optional(),
-  activo: z.boolean().default(true)
 });
 
 const actualizarGeneroSchema = crearGeneroSchema.partial();
 
 const idSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
 });
 
 export async function crearGeneroController(req, res, next) {
