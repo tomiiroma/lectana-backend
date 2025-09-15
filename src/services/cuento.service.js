@@ -36,6 +36,7 @@ export async function listarCuentos(filtros = {}) {
   let query = supabaseAdmin
     .from('cuento')
     .select(`
+      id_cuento,
       titulo,
       edad_publico,
       autor:autor_id_autor(nombre, apellido),
