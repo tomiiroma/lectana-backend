@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
-import { 
-  crearAulaController, 
-  listarAulasController, 
-  obtenerAulaController, 
-  actualizarAulaController, 
+import {
+  crearAulaController,
+  listarAulasController,
+  obtenerAulaController,
+  actualizarAulaController,
   eliminarAulaController,
   asignarCuentoAulaController,
   quitarCuentoAulaController,
@@ -12,7 +12,9 @@ import {
   quitarAlumnoAulaController,
   asignarDocenteAulaController,
   quitarDocenteAulaController,
-  estadisticasAulasController
+  estadisticasAulasController,
+  asignarEstudiantesAulaController,
+  asignarCuentosAulaController
 } from '../controllers/aula.controller.js';
 
 const router = Router();
@@ -38,5 +40,9 @@ router.put('/:id/asignar-alumno', requireAuth, requireRole('administrador'), asi
 router.put('/:id/quitar-alumno', requireAuth, requireRole('administrador'), quitarAlumnoAulaController);
 router.put('/:id/asignar-docente', requireAuth, requireRole('administrador'), asignarDocenteAulaController);
 router.put('/:id/quitar-docente', requireAuth, requireRole('administrador'), quitarDocenteAulaController);
+
+// Nuevas rutas para asignación masiva
+router.put('/:id/estudiantes', requireAuth, requireRole('administrador'), asignarEstudiantesAulaController);
+router.put('/:id/cuentos', requireAuth, requireRole('administrador'), asignarCuentosAulaController);
 
 export default router;

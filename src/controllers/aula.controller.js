@@ -11,7 +11,9 @@ import {
   quitarAlumnoAula,
   asignarDocenteAula,
   quitarDocenteAula,
-  contarAulas
+  contarAulas,
+  asignarEstudiantesAula,
+  asignarCuentosAula
 } from '../services/aula.service.js';
 
 const crearAulaSchema = z.object({
@@ -39,6 +41,14 @@ const asignarDocenteSchema = z.object({
 
 const idSchema = z.object({
   id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
+});
+
+const asignarEstudiantesSchema = z.object({
+  estudiantes_ids: z.array(z.number().int().positive()).min(0),
+});
+
+const asignarCuentosSchema = z.object({
+  cuentos_ids: z.array(z.number().int().positive()).min(0),
 });
 
 export async function crearAulaController(req, res, next) {
@@ -200,6 +210,40 @@ export async function estadisticasAulasController(req, res, next) {
   try {
     const total = await contarAulas();
     res.json({ ok: true, data: { total } });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function asignarEstudiantesAulaController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const { estudiantes_ids } = asignarEstudiantesSchema.parse(req.body);
+    
+    const result = await asignarEstudiantesAula(id, estudiantes_ids);
+    
+    res.status(200).json({
+      ok: true,
+      data: result,
+      message: 'Estudiantes asignados al aula exitosamente'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function asignarCuentosAulaController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const { cuentos_ids } = asignarCuentosSchema.parse(req.body);
+    
+    const result = await asignarCuentosAula(id, cuentos_ids);
+    
+    res.status(200).json({
+      ok: true,
+      data: result,
+      message: 'Cuentos asignados al aula exitosamente'
+    });
   } catch (error) {
     next(error);
   }

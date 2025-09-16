@@ -1,6 +1,19 @@
 import jwt from 'jsonwebtoken';
 import { supabaseAdmin } from '../config/supabase.js';
 
+// Cache simple en memoria para tokens verificados
+const tokenCache = new Map();
+const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutos
+
+const cleanExpiredCache = () => {
+  const now = Date.now();
+  for (const [key, value] of tokenCache.entries()) {
+    if (now - value.timestamp > CACHE_TIMEOUT) {
+      tokenCache.delete(key);
+    }
+  }
+};
+
 export function requireAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
@@ -15,7 +28,23 @@ export function requireAuth(req, res, next) {
       return res.status(500).json({ ok: false, error: 'JWT_SECRET no configurado' });
     }
 
+    // Limpiar entradas expiradas
+    cleanExpiredCache();
+
+    // Revisar cache primero
+    if (tokenCache.has(token)) {
+      const cached = tokenCache.get(token);
+      if (Date.now() - cached.timestamp < CACHE_TIMEOUT) {
+        req.user = cached.decoded;
+        return next();
+      } else {
+        tokenCache.delete(token);
+      }
+    }
+
+    // Verificar JWT y cachear resultado
     const decoded = jwt.verify(token, jwtSecret);
+    tokenCache.set(token, { decoded, timestamp: Date.now() });
     req.user = decoded;
     next();
   } catch (error) {
