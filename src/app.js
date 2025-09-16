@@ -17,6 +17,7 @@ import generoRouter from './routes/genero.routes.js';
 import cuentoRouter from './routes/cuento.routes.js';
 import imagenRouter from './routes/imagen.routes.js';
 import archivoRouter from './routes/archivo.routes.js';
+import aulaRouter from './routes/aula.routes.js';
 
 
 
@@ -63,6 +64,7 @@ app.use('/api/generos', generoRouter);
 app.use('/api/cuentos', cuentoRouter);
 app.use('/api/imagenes', imagenRouter);
 app.use('/api', archivoRouter);
+app.use('/api/aulas', aulaRouter);
 
 
 

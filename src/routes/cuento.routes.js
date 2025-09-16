@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { crearCuentoController, listarCuentosController, obtenerCuentoController, estadisticasCuentosController } from '../controllers/cuento.controller.js';
+import { crearCuentoController, listarCuentosController, obtenerCuentoController, actualizarCuentoController, estadisticasCuentosController } from '../controllers/cuento.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -12,8 +12,9 @@ router.use((req, res, next) => {
 
 router.post('/', requireAuth, requireRole('administrador'), crearCuentoController);
 router.get('/', requireAuth, requireRole('administrador'), listarCuentosController);
-router.get('/:id', requireAuth, requireRole('administrador'), obtenerCuentoController);
 router.get('/estadisticas/total', requireAuth, requireRole('administrador'), estadisticasCuentosController);
+router.get('/:id', requireAuth, requireRole('administrador'), obtenerCuentoController);
+router.put('/:id', requireAuth, requireRole('administrador'), actualizarCuentoController);
 
 export default router;
 
