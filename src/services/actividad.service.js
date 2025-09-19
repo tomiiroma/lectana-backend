@@ -27,7 +27,33 @@ export async function crearActividadConCuento({ fecha_entrega, descripcion, tipo
 // Crear actividad completa con preguntas y respuestas
 export async function crearActividadCompleta({ fecha_entrega, descripcion, tipo, cuento_id_cuento, preguntas }) {
   try {
-    // 1. Crear la actividad
+    // 1. Validar según el tipo de actividad
+    if (tipo === 'multiple_choice') {
+      // Para multiple_choice, validar que todas las preguntas tengan respuestas
+      preguntas.forEach((pregunta, index) => {
+        if (!pregunta.respuestas || pregunta.respuestas.length === 0) {
+          throw new Error(`La pregunta ${index + 1} debe tener al menos una respuesta para actividades de opción múltiple`);
+        }
+        const tieneRespuestaCorrecta = pregunta.respuestas.some(resp => resp.es_correcta);
+        if (!tieneRespuestaCorrecta) {
+          throw new Error(`La pregunta ${index + 1} debe tener al menos una respuesta correcta`);
+        }
+      });
+    } else if (tipo === 'respuesta_abierta') {
+      // Para respuesta_abierta, las preguntas no necesitan respuestas predefinidas
+      // Pero pueden tener respuestas de ejemplo o guía
+      preguntas.forEach((pregunta, index) => {
+        if (pregunta.respuestas && pregunta.respuestas.length > 0) {
+          // Si tiene respuestas, deben ser solo de ejemplo (es_correcta: false)
+          const tieneRespuestaCorrecta = pregunta.respuestas.some(resp => resp.es_correcta);
+          if (tieneRespuestaCorrecta) {
+            throw new Error(`La pregunta ${index + 1} no puede tener respuestas marcadas como correctas en actividades de respuesta abierta`);
+          }
+        }
+      });
+    }
+
+    // 2. Crear la actividad
     const actividad = await crearActividadConCuento({ 
       fecha_entrega, 
       descripcion, 
@@ -35,14 +61,14 @@ export async function crearActividadCompleta({ fecha_entrega, descripcion, tipo,
       cuento_id_cuento 
     });
 
-    // 2. Crear las preguntas
+    // 3. Crear las preguntas
     const preguntasCreadas = await crearPreguntasActividad(actividad.id_actividad, preguntas);
 
-    // 3. Crear las respuestas para cada pregunta
+    // 4. Crear las respuestas solo si es multiple_choice o si hay respuestas de ejemplo
     const preguntasConRespuestas = [];
     for (const pregunta of preguntasCreadas) {
       const preguntaOriginal = preguntas.find(p => p.enunciado === pregunta.enunciado);
-      if (preguntaOriginal && preguntaOriginal.respuestas) {
+      if (preguntaOriginal && preguntaOriginal.respuestas && preguntaOriginal.respuestas.length > 0) {
         const respuestas = await crearRespuestasActividad(pregunta.id_pregunta_actividad, preguntaOriginal.respuestas);
         preguntasConRespuestas.push({
           ...pregunta,
@@ -53,7 +79,7 @@ export async function crearActividadCompleta({ fecha_entrega, descripcion, tipo,
       }
     }
 
-    // 4. Retornar actividad completa
+    // 5. Retornar actividad completa
     return {
       ...actividad,
       preguntas: preguntasConRespuestas
@@ -159,7 +185,34 @@ export async function actualizarActividadCompleta(id_actividad, updates) {
 // Actualizar actividad completa con preguntas y respuestas
 export async function actualizarActividadCompletaConPreguntas(id_actividad, { fecha_entrega, descripcion, tipo, cuento_id_cuento, preguntas }) {
   try {
-    // 1. Actualizar la actividad básica
+    // 1. Validar según el tipo de actividad
+    if (preguntas && preguntas.length > 0) {
+      if (tipo === 'multiple_choice') {
+        // Para multiple_choice, validar que todas las preguntas tengan respuestas
+        preguntas.forEach((pregunta, index) => {
+          if (!pregunta.respuestas || pregunta.respuestas.length === 0) {
+            throw new Error(`La pregunta ${index + 1} debe tener al menos una respuesta para actividades de opción múltiple`);
+          }
+          const tieneRespuestaCorrecta = pregunta.respuestas.some(resp => resp.es_correcta);
+          if (!tieneRespuestaCorrecta) {
+            throw new Error(`La pregunta ${index + 1} debe tener al menos una respuesta correcta`);
+          }
+        });
+      } else if (tipo === 'respuesta_abierta') {
+        // Para respuesta_abierta, las preguntas no necesitan respuestas predefinidas
+        preguntas.forEach((pregunta, index) => {
+          if (pregunta.respuestas && pregunta.respuestas.length > 0) {
+            // Si tiene respuestas, deben ser solo de ejemplo (es_correcta: false)
+            const tieneRespuestaCorrecta = pregunta.respuestas.some(resp => resp.es_correcta);
+            if (tieneRespuestaCorrecta) {
+              throw new Error(`La pregunta ${index + 1} no puede tener respuestas marcadas como correctas en actividades de respuesta abierta`);
+            }
+          }
+        });
+      }
+    }
+
+    // 2. Actualizar la actividad básica
     const actividadActualizada = await actualizarActividadCompleta(id_actividad, {
       fecha_entrega,
       descripcion,
@@ -167,18 +220,18 @@ export async function actualizarActividadCompletaConPreguntas(id_actividad, { fe
       cuento_id_cuento
     });
 
-    // 2. Eliminar preguntas existentes (esto elimina también las respuestas por cascada)
+    // 3. Eliminar preguntas existentes (esto elimina también las respuestas por cascada)
     await eliminarPreguntasActividad(id_actividad);
 
-    // 3. Crear nuevas preguntas si se proporcionan
+    // 4. Crear nuevas preguntas si se proporcionan
     if (preguntas && preguntas.length > 0) {
       const preguntasCreadas = await crearPreguntasActividad(id_actividad, preguntas);
 
-      // 4. Crear respuestas para cada pregunta
+      // 5. Crear respuestas solo si es multiple_choice o si hay respuestas de ejemplo
       const preguntasConRespuestas = [];
       for (const pregunta of preguntasCreadas) {
         const preguntaOriginal = preguntas.find(p => p.enunciado === pregunta.enunciado);
-        if (preguntaOriginal && preguntaOriginal.respuestas) {
+        if (preguntaOriginal && preguntaOriginal.respuestas && preguntaOriginal.respuestas.length > 0) {
           const respuestas = await crearRespuestasActividad(pregunta.id_pregunta_actividad, preguntaOriginal.respuestas);
           preguntasConRespuestas.push({
             ...pregunta,

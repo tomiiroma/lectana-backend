@@ -8,7 +8,8 @@ import {
   obtenerEstadisticasUsuariosController,
   obtenerTodosUsuariosActivosController,
   obtenerTodosUsuariosInactivosController,
-  adminActualizarAdministradorController
+  adminActualizarAdministradorController,
+  cambiarContrasenaAdministradorController
 } from '../controllers/administrador.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -26,6 +27,7 @@ router.post('/crear-administrador', requireAuth, requireRole('administrador'), c
 // Perfil propio del administrador (autenticado como administrador)
 router.get('/obtener-perfil-administrador', requireAuth, requireRole('administrador'), obtenerPerfilAdministradorController);
 router.put('/actualizar-perfil-administrador', requireAuth, requireRole('administrador'), actualizarPerfilAdministradorController);
+router.put('/cambiar-contrasena-administrador', requireAuth, requireRole('administrador'), cambiarContrasenaAdministradorController);
 
 // Admin: Listar administradores y obtener por ID
 router.get('/admin-listar-administradores', requireAuth, requireRole('administrador'), listarAdministradoresController);

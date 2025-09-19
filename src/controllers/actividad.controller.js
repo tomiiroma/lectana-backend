@@ -38,8 +38,21 @@ const crearActividadCompletaSchema = z.object({
     respuestas: z.array(z.object({
       respuesta: z.string().min(1, 'La respuesta es requerida'),
       es_correcta: z.boolean()
-    })).min(1, 'Debe enviar al menos una respuesta')
+    })).optional() // Las respuestas son opcionales para respuesta_abierta
   })).min(1, 'Debe enviar al menos una pregunta')
+}).refine((data) => {
+  // Validación personalizada según el tipo
+  if (data.tipo === 'multiple_choice') {
+    // Para multiple_choice, todas las preguntas deben tener respuestas
+    return data.preguntas.every(pregunta => 
+      pregunta.respuestas && 
+      pregunta.respuestas.length > 0 && 
+      pregunta.respuestas.some(resp => resp.es_correcta)
+    );
+  }
+  return true; // Para respuesta_abierta no hay restricciones adicionales
+}, {
+  message: 'Las actividades de opción múltiple requieren respuestas con al menos una correcta'
 });
 
 // Schema para asignar docente - ELIMINADO
@@ -64,9 +77,22 @@ const actualizarActividadCompletaConPreguntasSchema = z.object({
     respuestas: z.array(z.object({
       respuesta: z.string().min(1, 'La respuesta es requerida'),
       es_correcta: z.boolean()
-    })).min(1, 'Debe enviar al menos una respuesta')
+    })).optional() // Las respuestas son opcionales para respuesta_abierta
   })).optional()
-}).refine(obj => Object.keys(obj).length > 0, { message: 'Debe enviar al menos un campo' });
+}).refine(obj => Object.keys(obj).length > 0, { message: 'Debe enviar al menos un campo' })
+.refine((data) => {
+  // Validación personalizada según el tipo si se proporcionan preguntas
+  if (data.preguntas && data.tipo === 'multiple_choice') {
+    return data.preguntas.every(pregunta => 
+      pregunta.respuestas && 
+      pregunta.respuestas.length > 0 && 
+      pregunta.respuestas.some(resp => resp.es_correcta)
+    );
+  }
+  return true;
+}, {
+  message: 'Las actividades de opción múltiple requieren respuestas con al menos una correcta'
+});
 
 // 1. Crear actividad con cuento (cuento requerido desde el inicio)
 export async function crearActividadConCuentoController(req, res, next) {

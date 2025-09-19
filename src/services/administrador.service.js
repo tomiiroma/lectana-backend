@@ -442,3 +442,50 @@ export async function adminActualizarAdministrador(administradorId, updates) {
   // Retornar administrador actualizado
   return await obtenerAdministradorPorId(administradorId);
 }
+
+export async function cambiarContrasenaAdministrador(usuarioId, { contrasena_actual, nueva_contrasena }) {
+  // Obtener el usuario con su contraseña actual
+  const { data: usuario, error: usuarioError } = await supabaseAdmin
+    .from('usuario')
+    .select('password')
+    .eq('id_usuario', usuarioId)
+    .single();
+
+  if (usuarioError || !usuario) {
+    throw new Error('Usuario no encontrado');
+  }
+
+  // Verificar que el usuario sea administrador
+  const { data: administrador, error: adminError } = await supabaseAdmin
+    .from('administrador')
+    .select('id_administrador')
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+
+  if (adminError || !administrador) {
+    throw new Error('Administrador no encontrado');
+  }
+
+  // Verificar contraseña actual
+  const bcrypt = await import('bcryptjs');
+  const contrasenaValida = await bcrypt.default.compare(contrasena_actual, usuario.password);
+  
+  if (!contrasenaValida) {
+    throw new Error('La contraseña actual es incorrecta');
+  }
+
+  // Hash de la nueva contraseña
+  const hashedPassword = await bcrypt.default.hash(nueva_contrasena, 12);
+
+  // Actualizar contraseña
+  const { error: updateError } = await supabaseAdmin
+    .from('usuario')
+    .update({ password: hashedPassword })
+    .eq('id_usuario', usuarioId);
+
+  if (updateError) {
+    throw new Error('Error al actualizar la contraseña: ' + updateError.message);
+  }
+
+  return { mensaje: 'Contraseña actualizada exitosamente' };
+}

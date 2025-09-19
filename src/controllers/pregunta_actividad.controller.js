@@ -39,7 +39,7 @@ const agregarPreguntaSchema = z.object({
   respuestas: z.array(z.object({
     respuesta: z.string().min(1, 'La respuesta es requerida'),
     es_correcta: z.boolean()
-  })).min(1, 'Debe enviar al menos una respuesta')
+  })).optional() // Las respuestas son opcionales para respuesta_abierta
 });
 
 // Schema para actualizar pregunta completa
@@ -48,7 +48,7 @@ const actualizarPreguntaCompletaSchema = z.object({
   respuestas: z.array(z.object({
     respuesta: z.string().min(1, 'La respuesta es requerida'),
     es_correcta: z.boolean()
-  })).min(1, 'Debe enviar al menos una respuesta').optional()
+  })).optional() // Las respuestas son opcionales para respuesta_abierta
 }).refine(obj => Object.keys(obj).length > 0, { message: 'Debe enviar al menos un campo' });
 
 // 1. Crear pregunta individual

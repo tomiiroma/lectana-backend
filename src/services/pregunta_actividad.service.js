@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { crearRespuestasActividad, eliminarRespuestasActividad } from './respuesta_actividad.service.js';
 
 // Crear pregunta para una actividad
 export async function crearPreguntaActividad({ enunciado, actividad_id_actividad }) {
@@ -105,10 +106,38 @@ export async function eliminarPreguntasActividad(actividad_id_actividad) {
 // Agregar pregunta a actividad existente
 export async function agregarPreguntaAActividad(actividad_id_actividad, { enunciado, respuestas }) {
   try {
-    // 1. Crear la pregunta
+    // 1. Obtener información de la actividad para validar el tipo
+    const { data: actividad, error: actividadError } = await supabaseAdmin
+      .from('actividad')
+      .select('tipo')
+      .eq('id_actividad', actividad_id_actividad)
+      .single();
+
+    if (actividadError) throw new Error(actividadError.message);
+
+    // 2. Validar según el tipo de actividad
+    if (actividad.tipo === 'multiple_choice') {
+      if (!respuestas || respuestas.length === 0) {
+        throw new Error('Las actividades de opción múltiple requieren al menos una respuesta');
+      }
+      const tieneRespuestaCorrecta = respuestas.some(resp => resp.es_correcta);
+      if (!tieneRespuestaCorrecta) {
+        throw new Error('Debe tener al menos una respuesta correcta');
+      }
+    } else if (actividad.tipo === 'respuesta_abierta') {
+      if (respuestas && respuestas.length > 0) {
+        // Si tiene respuestas, deben ser solo de ejemplo (es_correcta: false)
+        const tieneRespuestaCorrecta = respuestas.some(resp => resp.es_correcta);
+        if (tieneRespuestaCorrecta) {
+          throw new Error('Las actividades de respuesta abierta no pueden tener respuestas marcadas como correctas');
+        }
+      }
+    }
+
+    // 3. Crear la pregunta
     const pregunta = await crearPreguntaActividad({ enunciado, actividad_id_actividad });
 
-    // 2. Crear respuestas si se proporcionan
+    // 4. Crear respuestas si se proporcionan
     if (respuestas && respuestas.length > 0) {
       const respuestasCreadas = await crearRespuestasActividad(pregunta.id_pregunta_actividad, respuestas);
       return {
@@ -126,13 +155,44 @@ export async function agregarPreguntaAActividad(actividad_id_actividad, { enunci
 // Actualizar pregunta con sus respuestas
 export async function actualizarPreguntaCompleta(id_pregunta_actividad, { enunciado, respuestas }) {
   try {
-    // 1. Actualizar la pregunta
+    // 1. Obtener información de la actividad para validar el tipo
+    const { data: preguntaData, error: preguntaError } = await supabaseAdmin
+      .from('pregunta_actividad')
+      .select(`
+        actividad_id_actividad,
+        actividad:tipo
+      `)
+      .eq('id_pregunta_actividad', id_pregunta_actividad)
+      .single();
+
+    if (preguntaError) throw new Error(preguntaError.message);
+
+    // 2. Validar según el tipo de actividad
+    if (preguntaData.actividad === 'multiple_choice') {
+      if (!respuestas || respuestas.length === 0) {
+        throw new Error('Las actividades de opción múltiple requieren al menos una respuesta');
+      }
+      const tieneRespuestaCorrecta = respuestas.some(resp => resp.es_correcta);
+      if (!tieneRespuestaCorrecta) {
+        throw new Error('Debe tener al menos una respuesta correcta');
+      }
+    } else if (preguntaData.actividad === 'respuesta_abierta') {
+      if (respuestas && respuestas.length > 0) {
+        // Si tiene respuestas, deben ser solo de ejemplo (es_correcta: false)
+        const tieneRespuestaCorrecta = respuestas.some(resp => resp.es_correcta);
+        if (tieneRespuestaCorrecta) {
+          throw new Error('Las actividades de respuesta abierta no pueden tener respuestas marcadas como correctas');
+        }
+      }
+    }
+
+    // 3. Actualizar la pregunta
     const preguntaActualizada = await actualizarPreguntaActividad(id_pregunta_actividad, { enunciado });
 
-    // 2. Eliminar respuestas existentes
+    // 4. Eliminar respuestas existentes
     await eliminarRespuestasActividad(id_pregunta_actividad);
 
-    // 3. Crear nuevas respuestas si se proporcionan
+    // 5. Crear nuevas respuestas si se proporcionan
     if (respuestas && respuestas.length > 0) {
       const respuestasCreadas = await crearRespuestasActividad(id_pregunta_actividad, respuestas);
       return {
