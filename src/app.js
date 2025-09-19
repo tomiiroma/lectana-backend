@@ -18,6 +18,10 @@ import cuentoRouter from './routes/cuento.routes.js';
 import imagenRouter from './routes/imagen.routes.js';
 import archivoRouter from './routes/archivo.routes.js';
 import aulaRouter from './routes/aula.routes.js';
+import actividadRouter from './routes/actividad.routes.js';
+import preguntaActividadRouter from './routes/pregunta_actividad.routes.js';
+import respuestaActividadRouter from './routes/respuesta_actividad.routes.js';
+import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 
 
 
@@ -102,6 +106,10 @@ app.use('/api/cuentos', cuentoRouter);
 app.use('/api/imagenes', imagenRouter);
 app.use('/api', archivoRouter);
 app.use('/api/aulas', aulaRouter);
+app.use('/api/actividades', actividadRouter);
+app.use('/api/preguntas', preguntaActividadRouter);
+app.use('/api/respuestas', respuestaActividadRouter);
+app.use('/api/respuestas-usuario', respuestaUsuarioRouter);
 
 
 

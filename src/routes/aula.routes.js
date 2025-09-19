@@ -16,6 +16,7 @@ import {
   asignarEstudiantesAulaController,
   asignarCuentosAulaController
 } from '../controllers/aula.controller.js';
+import { obtenerActividadesDeAulaController } from '../controllers/actividad.controller.js';
 
 const router = Router();
 
@@ -44,5 +45,8 @@ router.put('/:id/quitar-docente', requireAuth, requireRole('administrador'), qui
 // Nuevas rutas para asignación masiva
 router.put('/:id/estudiantes', requireAuth, requireRole('administrador'), asignarEstudiantesAulaController);
 router.put('/:id/cuentos', requireAuth, requireRole('administrador'), asignarCuentosAulaController);
+
+// Ruta para obtener actividades de un aula
+router.get('/:id/actividades', requireAuth, requireRole('administrador'), obtenerActividadesDeAulaController);
 
 export default router;
