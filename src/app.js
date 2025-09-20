@@ -97,7 +97,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 app.use('/api/usuarios', usuarioRouter);
 app.use('/api/docentes', docenteRouter);
-app.use('/api/administradores', administradorRouter);
+app.use('/api/administrador', administradorRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/alumnos', alumnoRouter);
 app.use('/api/autores', autorRouter);
