@@ -1,5 +1,22 @@
 import { Router } from 'express';
-import { crearAulaController, obtenerAulaController, actualizarAulaController, eliminarAulaController, listarAlumnosDeAulaController } from '../controllers/aula.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
+import {
+  crearAulaController,
+  listarAulasController,
+  obtenerAulaController,
+  actualizarAulaController,
+  eliminarAulaController,
+  asignarCuentoAulaController,
+  quitarCuentoAulaController,
+  asignarAlumnoAulaController,
+  quitarAlumnoAulaController,
+  asignarDocenteAulaController,
+  quitarDocenteAulaController,
+  estadisticasAulasController,
+  asignarEstudiantesAulaController,
+  asignarCuentosAulaController
+} from '../controllers/aula.controller.js';
+import { obtenerActividadesDeAulaController } from '../controllers/actividad.controller.js';
 
 const router = Router();
 
@@ -9,10 +26,27 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/', crearAulaController);
-router.get('/:id', obtenerAulaController);
-router.put('/:id', actualizarAulaController);
-router.delete('/:id', eliminarAulaController);
-router.get('/:id/alumnos', listarAlumnosDeAulaController);
+// Rutas protegidas para administradores
+router.post('/', requireAuth, requireRole('administrador'), crearAulaController);
+router.get('/', requireAuth, requireRole('administrador'), listarAulasController);
+router.get('/estadisticas/total', requireAuth, requireRole('administrador'), estadisticasAulasController);
+router.get('/:id', requireAuth, requireRole('administrador'), obtenerAulaController);
+router.put('/:id', requireAuth, requireRole('administrador'), actualizarAulaController);
+router.delete('/:id', requireAuth, requireRole('administrador'), eliminarAulaController);
+
+// Rutas para asignar/quitar cuentos, alumnos y docentes
+router.put('/:id/asignar-cuento', requireAuth, requireRole('administrador'), asignarCuentoAulaController);
+router.put('/:id/quitar-cuento', requireAuth, requireRole('administrador'), quitarCuentoAulaController);
+router.put('/:id/asignar-alumno', requireAuth, requireRole('administrador'), asignarAlumnoAulaController);
+router.put('/:id/quitar-alumno', requireAuth, requireRole('administrador'), quitarAlumnoAulaController);
+router.put('/:id/asignar-docente', requireAuth, requireRole('administrador'), asignarDocenteAulaController);
+router.put('/:id/quitar-docente', requireAuth, requireRole('administrador'), quitarDocenteAulaController);
+
+// Nuevas rutas para asignación masiva
+router.put('/:id/estudiantes', requireAuth, requireRole('administrador'), asignarEstudiantesAulaController);
+router.put('/:id/cuentos', requireAuth, requireRole('administrador'), asignarCuentosAulaController);
+
+// Ruta para obtener actividades de un aula
+router.get('/:id/actividades', requireAuth, requireRole('administrador'), obtenerActividadesDeAulaController);
 
 export default router;

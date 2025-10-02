@@ -1,5 +1,17 @@
 import { Router } from 'express';
-import { crearAdministradorController, obtenerAdministradorController, actualizarAdministradorController } from '../controllers/administrador.controller.js';
+import { 
+  crearAdministradorController, 
+  obtenerAdministradorController, 
+  listarAdministradoresController,
+  obtenerPerfilAdministradorController,
+  actualizarPerfilAdministradorController,
+  obtenerEstadisticasUsuariosController,
+  obtenerTodosUsuariosActivosController,
+  obtenerTodosUsuariosInactivosController,
+  adminActualizarAdministradorController,
+  cambiarContrasenaAdministradorController
+} from '../controllers/administrador.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -9,8 +21,24 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post('/', crearAdministradorController);
-router.get('/:id', obtenerAdministradorController);
-router.put('/:id', actualizarAdministradorController);
+// Crear administrador (solo admin)
+router.post('/crear-administrador', requireAuth, requireRole('administrador'), crearAdministradorController);
+
+// Perfil propio del administrador (autenticado como administrador)
+router.get('/obtener-perfil-administrador', requireAuth, requireRole('administrador'), obtenerPerfilAdministradorController);
+router.put('/actualizar-perfil-administrador', requireAuth, requireRole('administrador'), actualizarPerfilAdministradorController);
+router.put('/cambiar-contrasena-administrador', requireAuth, requireRole('administrador'), cambiarContrasenaAdministradorController);
+
+// Admin: Listar administradores y obtener por ID
+router.get('/admin-listar-administradores', requireAuth, requireRole('administrador'), listarAdministradoresController);
+router.get('/admin-obtener-administrador/:id', requireAuth, requireRole('administrador'), obtenerAdministradorController);
+router.put('/admin-actualizar-administrador/:id', requireAuth, requireRole('administrador'), adminActualizarAdministradorController);
+
+// Estadísticas de usuarios
+router.get('/estadisticas-usuarios', requireAuth, requireRole('administrador'), obtenerEstadisticasUsuariosController);
+
+// Todos los usuarios por estado
+router.get('/todos-usuarios-activos', requireAuth, requireRole('administrador'), obtenerTodosUsuariosActivosController);
+router.get('/todos-usuarios-inactivos', requireAuth, requireRole('administrador'), obtenerTodosUsuariosInactivosController);
 
 export default router;

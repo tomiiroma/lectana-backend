@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { loginController } from '../controllers/auth.controller.js';
+import { 
+  loginController, 
+  registerAlumnoController, 
+  registerDocenteController, 
+  registerAdministradorController,
+  getMeController 
+} from '../controllers/auth.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -10,5 +17,21 @@ router.use((req, res, next) => {
 });
 
 router.post('/login', loginController);
+router.post('/registro-form-alumno', registerAlumnoController);
+router.post('/registro-form-docente', registerDocenteController);
+router.post('/admin-registro-administrador', requireAuth, requireRole('administrador'), registerAdministradorController);
+router.get('/me', requireAuth, getMeController);
+
+// Verificación rápida de token
+router.get('/verify-token', requireAuth, (req, res) => {
+  res.json({
+    ok: true,
+    usuario: {
+      id_usuario: req.user.sub,
+      role: req.user.role,
+      verificado: req.user.verificado,
+    }
+  });
+});
 
 export default router;
