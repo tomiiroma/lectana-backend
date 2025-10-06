@@ -1,4 +1,4 @@
-import { crearUsuario } from '../services/usuario.service.js';
+import { activarUsuario, crearUsuario, desactivarUsuario } from '../services/usuario.service.js';
 import { obtenerUsuarioPorId, actualizarUsuario } from '../services/usuario.service.js';
 import { z } from 'zod';
 
@@ -34,6 +34,38 @@ export async function crearUsuarioController(req, res, next) {
 const obtenerUsuarioSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
+
+export async function desactivarUsuarioController(req,res){
+  try{
+  const { id } = req.params
+
+  const actualizarUsuario = await desactivarUsuario(id)
+
+    res.status(201).json({ ok: true, message: "Usuario desactivado correctamente" });
+  }catch(error){
+ if (error) {
+      return res.status(400).json({ ok: false, error: error.message});
+    }
+    next(error);
+  }
+
+}
+
+export async function activarUsuarioController(req,res){
+  try{
+  const { id } = req.params
+
+  const actualizarUsuario = await activarUsuario(id)
+
+    res.status(201).json({ ok: true, message: "Usuario activado correctamente" });
+  }catch(error){
+ if (error) {
+      return res.status(400).json({ ok: false, error: error.message});
+    }
+    next(error);
+  }
+
+}
 
 export async function obtenerUsuarioController(req, res, next) {
   try {

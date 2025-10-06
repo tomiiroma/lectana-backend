@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { crearUsuarioController, obtenerUsuarioController, actualizarUsuarioController } from '../controllers/usuario.controller.js';
+import { crearUsuarioController, obtenerUsuarioController, actualizarUsuarioController, desactivarUsuarioController, activarUsuarioController } from '../controllers/usuario.controller.js';
 
 const router = Router();
 
@@ -13,5 +13,7 @@ router.use((req, res, next) => {
 router.post('/', crearUsuarioController);
 router.get('/:id', obtenerUsuarioController);
 router.put('/:id', actualizarUsuarioController);
+router.put('/desactivarUsuario/:id', desactivarUsuarioController);
+router.put('/activarUsuario/:id', activarUsuarioController);
 
 export default router;
