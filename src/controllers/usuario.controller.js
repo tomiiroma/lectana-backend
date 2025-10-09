@@ -1,4 +1,4 @@
-import { activarUsuario, crearUsuario, desactivarUsuario } from '../services/usuario.service.js';
+import { activarUsuario, AgregarLibroAfavoritos, crearUsuario, desactivarUsuario } from '../services/usuario.service.js';
 import { obtenerUsuarioPorId, actualizarUsuario } from '../services/usuario.service.js';
 import { z } from 'zod';
 
@@ -101,4 +101,29 @@ export async function actualizarUsuarioController(req, res, next) {
     }
     next(error);
   }
+}
+
+export async function agregarLibroFavoritos(req,res){
+  try{
+    const  id_usuario  = req.user.sub;
+    const { id_libro } = req.body;
+
+
+    if(!id_libro){
+      return res.status(400).json({
+        ok: false,
+        error: "El libro escogido es invalido"
+      })
+    }
+
+    const favLibro = await AgregarLibroAfavoritos(id_usuario, id_libro)
+
+    return favLibro;
+  }catch(error){
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    })
+  }
+   
 }

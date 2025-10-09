@@ -66,3 +66,16 @@ export async function actualizarUsuario(id_usuario, updates) {
   const { password: _omit, ...usuarioSinPassword } = data || {};
   return usuarioSinPassword;
 }
+
+export async function AgregarLibroAfavoritos(id_usuario, id_libro){
+      const { data, error } = await supabaseAdmin
+      .from('usuario_cuento')
+      .insert([{id_usuario, id_libro}])
+      .select()
+
+      if (error){
+        return error;
+      }
+
+      return data;
+}

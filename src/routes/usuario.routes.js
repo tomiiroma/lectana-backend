@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { crearUsuarioController, obtenerUsuarioController, actualizarUsuarioController, desactivarUsuarioController, activarUsuarioController } from '../controllers/usuario.controller.js';
+import { agregarLibroFavoritos ,crearUsuarioController, obtenerUsuarioController, actualizarUsuarioController, desactivarUsuarioController, activarUsuarioController } from '../controllers/usuario.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -15,5 +16,8 @@ router.get('/:id', obtenerUsuarioController);
 router.put('/:id', actualizarUsuarioController);
 router.put('/desactivarUsuario/:id', desactivarUsuarioController);
 router.put('/activarUsuario/:id', activarUsuarioController);
+
+
+router.post('/fav-libro',requireAuth ,agregarLibroFavoritos)
 
 export default router;
