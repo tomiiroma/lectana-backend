@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { login, registerAlumno, registerDocente, registerAdministrador, getMe } from '../services/auth.service.js';
+import cookieParser from 'cookie-parser';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -43,7 +44,19 @@ export async function loginController(req, res, next) {
   try {
     const { email, password } = loginSchema.parse(req.body);
     const result = await login({ email, password });
-    res.json({ ok: true, ...result });
+
+    const token = result.token
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+    })
+    
+    res.json({
+      ok: true,
+      ...result,
+    })
+
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
@@ -53,6 +66,12 @@ export async function loginController(req, res, next) {
     }
     next(error);
   }
+}
+
+export async function logoutController(req, res){
+  res
+  .clearCookie('token')
+  .json({message : "Logout Exitoso"}) //Se puede redirigir a una ruta sino
 }
 
 export async function registerAlumnoController(req, res, next) {

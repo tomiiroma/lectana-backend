@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 import healthRouter from './routes/health.routes.js';
 import testRouter from './routes/test.routes.js';
@@ -26,7 +27,7 @@ import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 
 
 const app = express();
-
+app.use(cookieParser())
 // Middlewares
 const rawOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')

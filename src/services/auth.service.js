@@ -6,6 +6,9 @@ import { crearDocente } from './docente.service.js';
 import { crearAdministrador } from './administrador.service.js';
 import { verificarCapacidadAula } from '../utils/validaciones.js';
 
+
+// TODO: PONER EN COOKIE EL JWT
+
 export async function login({ email, password }) {
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) throw new Error('JWT_SECRET no configurado');
@@ -69,6 +72,7 @@ export async function login({ email, password }) {
     administrador: administrador || undefined,
   };
 }
+
 
 export async function registerAlumno({ nombre, apellido, email, edad, password, codigo_acceso }) {
   const jwtSecret = process.env.JWT_SECRET;

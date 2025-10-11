@@ -16,16 +16,23 @@ const cleanExpiredCache = () => {
 
 export function requireAuth(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ ok: false, error: 'Token de acceso requerido' });
-    }
-
-    const token = authHeader.substring(7);
-    const jwtSecret = process.env.JWT_SECRET;
+       const jwtSecret = process.env.JWT_SECRET;
     
     if (!jwtSecret) {
       return res.status(500).json({ ok: false, error: 'JWT_SECRET no configurado' });
+    }
+
+    const token = req.cookies?.token
+
+
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+    if (!token) {
+      return res.status(401).json({ ok: false, error: 'Token de acceso requerido' });
     }
 
     // Limpiar entradas expiradas
@@ -44,6 +51,7 @@ export function requireAuth(req, res, next) {
 
     // Verificar JWT y cachear resultado
     const decoded = jwt.verify(token, jwtSecret);
+    
     tokenCache.set(token, { decoded, timestamp: Date.now() });
     req.user = decoded;
     next();

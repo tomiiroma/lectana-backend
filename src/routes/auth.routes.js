@@ -4,7 +4,8 @@ import {
   registerAlumnoController, 
   registerDocenteController, 
   registerAdministradorController,
-  getMeController 
+  getMeController, 
+  logoutController
 } from '../controllers/auth.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -17,6 +18,7 @@ router.use((req, res, next) => {
 });
 
 router.post('/login', loginController);
+router.post('/logout', logoutController)
 router.post('/registro-form-alumno', registerAlumnoController);
 router.post('/registro-form-docente', registerDocenteController);
 router.post('/admin-registro-administrador', requireAuth, requireRole('administrador'), registerAdministradorController);
