@@ -2,7 +2,7 @@
   "name": "lectana-backend",
   "version": "1.0.0",
   "description": "API REST para la plataforma de lectura educativa **Lectana**, desarrollada en **Node.js** y **Express**. Este backend centraliza la lógica de negocio y se conecta con una base de datos **PostgreSQL** alojada en **Supabase**. Sirve tanto al panel web de administración como a la app móvil para docentes y estudiantes.",
-  "main": "index.js",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
