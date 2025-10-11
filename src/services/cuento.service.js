@@ -131,3 +131,83 @@ export async function obtenerCuentosPorAula(aulaId) {
 
   return cuentos.map(item => item.cuento);
 }
+
+// Funciones para rutas públicas
+export async function listarCuentosPublicos(filtros = {}) {
+  const { page = 1, limit = 10, edad_publico, genero_id, autor_id, titulo } = filtros;
+  const offset = (page - 1) * limit;
+
+  let query = supabaseAdmin
+    .from('cuento')
+    .select(`
+      id_cuento,
+      titulo,
+      edad_publico,
+      url_img,
+      duracion,
+      autor:autor_id_autor(nombre, apellido),
+      genero:genero_id_genero(nombre)
+    `, { count: 'exact' });
+
+  // Aplicar filtros
+  if (edad_publico) {
+    query = query.eq('edad_publico', edad_publico);
+  }
+  
+  if (genero_id) {
+    query = query.eq('genero_id_genero', genero_id);
+  }
+  
+  if (autor_id) {
+    query = query.eq('autor_id_autor', autor_id);
+  }
+  
+  if (titulo) {
+    query = query.ilike('titulo', `%${titulo}%`);
+  }
+
+  // Ordenar por título ascendente por defecto
+  query = query.order('titulo', { ascending: true });
+
+  // Aplicar paginación
+  query = query.range(offset, offset + limit - 1);
+
+  const { data: cuentos, error, count } = await query;
+
+  if (error) {
+    throw new Error(`Error al listar cuentos públicos: ${error.message}`);
+  }
+
+  return {
+    cuentos,
+    paginacion: {
+      pagina_actual: page,
+      total_paginas: Math.ceil((count || 0) / limit),
+      total_cuentos: count || 0,
+      cuentos_por_pagina: limit
+    }
+  };
+}
+
+export async function obtenerCuentoPublicoPorId(id) {
+  const { data: cuento, error } = await supabaseAdmin
+    .from('cuento')
+    .select(`
+      id_cuento,
+      titulo,
+      edad_publico,
+      url_img,
+      duracion,
+      pdf_url,
+      autor:autor_id_autor(nombre, apellido),
+      genero:genero_id_genero(nombre)
+    `)
+    .eq('id_cuento', id)
+    .single();
+
+  if (error) {
+    throw new Error('Cuento no encontrado');
+  }
+
+  return cuento;
+}
