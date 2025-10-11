@@ -9,20 +9,7 @@ import {
   obtenerLogrosAlumno
 } from '../services/logro.service.js';
 
-const crearLogroSchema = z.object({
-  nombre: z.string().min(1),
-  descripcion: z.string().optional(),
-  categoria: z.enum(['puntos', 'lectura', 'actividades', 'racha']),
-  puntos_requeridos: z.number().int().min(1).optional(),
-  icono_url: z.string().url().optional(),
-  activo: z.boolean().default(true)
-});
-
-const actualizarLogroSchema = crearLogroSchema.partial();
-
-const idSchema = z.object({
-  id: z.string().uuid(),
-});
+import { crearLogroSchema, actualizarLogroSchema, idSchema } from '../schemas/logroSchema.js';
 
 export async function crearLogroController(req, res, next) {
   try {

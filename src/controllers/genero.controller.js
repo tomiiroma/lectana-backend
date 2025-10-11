@@ -7,15 +7,9 @@ import {
   eliminarGenero 
 } from '../services/genero.service.js';
 
-const crearGeneroSchema = z.object({
-  nombre: z.string().min(1),
-});
+import { crearGeneroSchema, actualizarGeneroSchema, idSchema } from '../schemas/generoSchema.js';
 
-const actualizarGeneroSchema = crearGeneroSchema.partial();
 
-const idSchema = z.object({
-  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
-});
 
 export async function crearGeneroController(req, res, next) {
   try {

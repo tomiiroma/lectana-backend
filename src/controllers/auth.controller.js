@@ -1,44 +1,7 @@
 import { z } from 'zod';
 import { login, registerAlumno, registerDocente, registerAdministrador, getMe } from '../services/auth.service.js';
 import cookieParser from 'cookie-parser';
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-
-const registerAlumnoSchema = z.object({
-  nombre: z.string().min(2),
-  apellido: z.string().min(2),
-  email: z.string().email(),
-  edad: z.number().int().min(5).max(120),
-  password: z.string().min(8),
-  codigo_acceso: z.string().optional(),
-});
-
-const registerDocenteSchema = z.object({
-  nombre: z.string().min(2),
-  apellido: z.string().min(2),
-  email: z.string().email(),
-  edad: z.number().int().min(18).max(120),
-  password: z.string().min(8),
-  dni: z.string().min(7).max(15),
-  telefono: z.string().optional(),
-  institucion_nombre: z.string().min(2),
-  institucion_pais: z.string().min(2),
-  institucion_provincia: z.string().min(2),
-  nivel_educativo: z.enum(['primaria', 'secundaria', 'ambos']),
-});
-
-const registerAdministradorSchema = z.object({
-  nombre: z.string().min(2),
-  apellido: z.string().min(2),
-  email: z.string().email(),
-  edad: z.number().int().min(18).max(120),
-  password: z.string().min(8),
-  dni: z.string().min(7).max(15),
-  telefono: z.string().optional(),
-});
+import { loginSchema,registerAlumnoSchema,registerDocenteSchema,registerAdministradorSchema } from '../schemas/authSchema.js';
 
 export async function loginController(req, res, next) {
   try {

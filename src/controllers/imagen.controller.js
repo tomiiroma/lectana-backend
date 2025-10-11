@@ -9,11 +9,8 @@ import {
   subirImagenYAsociarCuento 
 } from '../services/imagen.service.js';
 
-const subirImagenSchema = z.object({
-  carpeta: z.enum(['items', 'avatares', 'marcos', 'fondos']).default('items'),
-  tipo: z.string().optional(),
-  categoria: z.string().optional()
-});
+import { subirImagenSchema } from '../schemas/imagenSchema.js';
+
 
 export async function subirImagenController(req, res, next) {
   try {

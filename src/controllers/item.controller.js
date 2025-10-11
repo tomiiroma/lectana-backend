@@ -13,30 +13,8 @@ import {
   obtenerEstadisticasItems
 } from '../services/item.service.js';
 import { subirImagen, eliminarImagen } from '../services/imagen.service.js';
+import { actualizarItemSchemam, crearItemSchema, idSchema, categoriaSchema, tipoSchema } from '../schemas/itemSchema.js';
 
-const crearItemSchema = z.object({
-  nombre: z.string().min(1),
-  descripcion: z.string().optional(),
-  tipo: z.enum(['avatar', 'marco', 'fondo', 'badge', 'accesorio']),
-  categoria: z.enum(['superheroe', 'animal', 'fantasia', 'deportes', 'musica', 'arte', 'naturaleza']),
-  precio_puntos: z.number().int().min(1),
-  url_imagen: z.string().url(),
-  activo: z.boolean().default(true)
-});
-
-const actualizarItemSchema = crearItemSchema.partial();
-
-const idSchema = z.object({
-  id: z.string().uuid(),
-});
-
-const categoriaSchema = z.object({
-  categoria: z.string()
-});
-
-const tipoSchema = z.object({
-  tipo: z.string()
-});
 
 export async function crearItemController(req, res, next) {
   try {

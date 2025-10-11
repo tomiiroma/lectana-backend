@@ -7,16 +7,10 @@ import {
   eliminarAutor 
 } from '../services/autor.service.js';
 
-const crearAutorSchema = z.object({
-  nombre: z.string().min(1),
-  apellido: z.string().min(1),
-});
+import { crearAutorSchema, idSchema, actualizarAutorSchema } from '../schemas/autorSchema.js';
 
-const actualizarAutorSchema = crearAutorSchema.partial();
 
-const idSchema = z.object({
-  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
-});
+
 
 export async function crearAutorController(req, res, next) {
   try {
