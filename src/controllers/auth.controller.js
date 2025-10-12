@@ -65,6 +65,9 @@ export async function registerDocenteController(req, res, next) {
     if (String(error.message).toLowerCase().includes('email')) {
       return res.status(409).json({ ok: false, error: 'Email ya registrado' });
     }
+    if (String(error.message).toLowerCase().includes('constraint')) {
+      return res.status(400).json({ ok: false, error: 'Error en los datos enviados: ' + error.message });
+    }
     next(error);
   }
 }

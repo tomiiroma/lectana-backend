@@ -9,7 +9,7 @@ export async function crearDocente({ usuario_id_usuario, dni, telefono, instituc
     institucion_nombre: institucion_nombre || '',
     institucion_pais: institucion_pais || '',
     institucion_provincia: institucion_provincia || '',
-    nivel_educativo: (nivel_educativo || 'Primaria').toLowerCase(),
+    nivel_educativo: (nivel_educativo || 'PRIMARIA').toLowerCase(),
     verificado,
     usuario_id_usuario
   };

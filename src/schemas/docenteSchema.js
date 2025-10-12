@@ -8,7 +8,7 @@ export const crearDocenteSchema = z.object({
   institucion_nombre: z.string().min(1),
   institucion_pais: z.string().min(1),
   institucion_provincia: z.string().min(1),
-  nivel_educativo: z.enum(['Primaria','Secundaria','Ambos']).default('Primaria')
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).default('PRIMARIA')
 });
 
 export const listarSchema = z.object({
@@ -31,7 +31,7 @@ export const actualizarPerfilSchema = z.object({
   institucion_nombre: z.string().min(1).optional(),
   institucion_pais: z.string().min(1).optional(),
   institucion_provincia: z.string().min(1).optional(),
-  nivel_educativo: z.enum(['Primaria','Secundaria','Ambos']).optional()
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional()
 });
 
 export const adminActualizarDocenteSchema = z.object({
@@ -46,6 +46,6 @@ export const adminActualizarDocenteSchema = z.object({
   institucion_nombre: z.string().min(1).optional(),
   institucion_pais: z.string().min(1).optional(),
   institucion_provincia: z.string().min(1).optional(),
-  nivel_educativo: z.enum(['Primaria','Secundaria','Ambos']).optional(),
+  nivel_educativo: z.enum(['PRIMARIA','SECUNDARIA','AMBOS']).optional(),
   verificado: z.boolean().optional()
 });
