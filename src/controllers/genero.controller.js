@@ -75,3 +75,13 @@ export async function eliminarGeneroController(req, res, next) {
     next(error);
   }
 }
+
+// Controlador para ruta pública
+export async function listarGenerosPublicosController(req, res, next) {
+  try {
+    const result = await listarGeneros();
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
