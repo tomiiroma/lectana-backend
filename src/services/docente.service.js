@@ -2,6 +2,15 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { crearUsuario, actualizarUsuario } from './usuario.service.js';
 
 export async function crearDocente({ usuario_id_usuario, dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo, verificado = true }) {
+  // Mapear valores numéricos a texto para la base de datos
+  const nivelEducativoMap = {
+    '1': 'primaria',
+    '2': 'secundaria', 
+    '3': 'ambos'
+  };
+  
+  const nivelEducativoDB = nivelEducativoMap[nivel_educativo] || 'primaria';
+  
   // Crear docente asociado al usuario existente
   const docenteData = {
     dni,
@@ -9,7 +18,7 @@ export async function crearDocente({ usuario_id_usuario, dni, telefono, instituc
     institucion_nombre: institucion_nombre || '',
     institucion_pais: institucion_pais || '',
     institucion_provincia: institucion_provincia || '',
-    nivel_educativo: nivel_educativo || 'primaria',
+    nivel_educativo: nivelEducativoDB,
     verificado,
     usuario_id_usuario
   };
@@ -99,6 +108,13 @@ export async function obtenerPerfilDocente(usuarioId) {
 }
 
 export async function actualizarPerfilDocente(usuarioId, updates) {
+  // Mapear valores numéricos a texto para la base de datos
+  const nivelEducativoMap = {
+    '1': 'primaria',
+    '2': 'secundaria', 
+    '3': 'ambos'
+  };
+  
   // Separar campos de usuario y docente
   const usuarioUpdates = {};
   const docenteUpdates = {};
@@ -113,7 +129,9 @@ export async function actualizarPerfilDocente(usuarioId, updates) {
   if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
   if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;
   if (updates.institucion_provincia) docenteUpdates.institucion_provincia = updates.institucion_provincia;
-  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo;
+  if (updates.nivel_educativo) {
+    docenteUpdates.nivel_educativo = nivelEducativoMap[updates.nivel_educativo] || updates.nivel_educativo;
+  }
 
   // Actualizar usuario si hay cambios
   if (Object.keys(usuarioUpdates).length > 0) {
@@ -159,6 +177,13 @@ export async function obtenerDocentePorId(docenteId) {
 }
 
 export async function adminActualizarDocente(docenteId, updates) {
+  // Mapear valores numéricos a texto para la base de datos
+  const nivelEducativoMap = {
+    '1': 'primaria',
+    '2': 'secundaria', 
+    '3': 'ambos'
+  };
+  
   // Obtener el docente para acceder al usuario_id_usuario
   const { data: docente, error: docenteError } = await supabaseAdmin
     .from('docente')
@@ -184,7 +209,9 @@ export async function adminActualizarDocente(docenteId, updates) {
   if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
   if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;
   if (updates.institucion_provincia) docenteUpdates.institucion_provincia = updates.institucion_provincia;
-  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo;
+  if (updates.nivel_educativo) {
+    docenteUpdates.nivel_educativo = nivelEducativoMap[updates.nivel_educativo] || updates.nivel_educativo;
+  }
   if (updates.verificado !== undefined) docenteUpdates.verificado = updates.verificado;
 
   // Actualizar usuario si hay cambios

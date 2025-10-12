@@ -26,7 +26,7 @@ export const registerDocenteSchema = z.object({
   institucion_nombre: z.string().min(2),
   institucion_pais: z.string().min(2),
   institucion_provincia: z.string().min(2),
-  nivel_educativo: z.enum(['primaria', 'secundaria', 'ambos']),
+  nivel_educativo: z.enum(['1', '2', '3']),
 });
 
 export const registerAdministradorSchema = z.object({
