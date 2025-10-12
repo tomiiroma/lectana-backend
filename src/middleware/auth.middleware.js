@@ -22,8 +22,7 @@ export function requireAuth(req, res, next) {
       return res.status(500).json({ ok: false, error: 'JWT_SECRET no configurado' });
     }
 
-    const token = req.cookies?.token
-
+    let token = req.cookies?.token;
 
     if (!token) {
       const authHeader = req.headers.authorization;
