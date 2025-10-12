@@ -2,11 +2,7 @@ import { z } from 'zod';
 
 
 export const crearDocenteSchema = z.object({
-  nombre: z.string().min(2).max(50),
-  apellido: z.string().min(2).max(50),
-  email: z.string().email(),
-  edad: z.number().int().min(18).max(80),
-  password: z.string().min(6),
+  usuario_id_usuario: z.number().int().positive(),
   dni: z.string().min(6),
   telefono: z.string().optional(),
   institucion_nombre: z.string().min(1),

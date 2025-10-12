@@ -1,11 +1,8 @@
 import { supabaseAdmin } from '../config/supabase.js';
 import { crearUsuario, actualizarUsuario } from './usuario.service.js';
 
-export async function crearDocente({ nombre, apellido, email, edad, password, dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo }) {
-  // Crear usuario primero
-  const usuario = await crearUsuario({ nombre, apellido, email, edad, password });
-  
-  // Crear docente asociado al usuario
+export async function crearDocente({ usuario_id_usuario, dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo, verificado = true }) {
+  // Crear docente asociado al usuario existente
   const docenteData = {
     dni,
     telefono: telefono || '',
@@ -13,8 +10,8 @@ export async function crearDocente({ nombre, apellido, email, edad, password, dn
     institucion_pais: institucion_pais || '',
     institucion_provincia: institucion_provincia || '',
     nivel_educativo: nivel_educativo || 'PRIMARIA',
-    verificado: true,
-    usuario_id_usuario: usuario.id_usuario
+    verificado,
+    usuario_id_usuario
   };
 
   const { data: docente, error } = await supabaseAdmin
