@@ -27,6 +27,10 @@ import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 
 
 const app = express();
+
+// Configurar trust proxy para Render
+app.set('trust proxy', 1);
+
 app.use(cookieParser())
 // Middlewares
 const rawOrigins = (process.env.CORS_ORIGINS || '')
@@ -77,6 +81,15 @@ const authLimiter = rateLimit({
   max: process.env.NODE_ENV === 'production' ? 200 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  // Configurar keyGenerator para usar IP real detrás del proxy
+  keyGenerator: (req) => {
+    // En producción (Render), usar X-Forwarded-For para obtener IP real
+    if (process.env.NODE_ENV === 'production') {
+      return req.ip || req.connection.remoteAddress;
+    }
+    // En desarrollo, usar IP normal
+    return req.ip;
+  },
   skip: (req) => {
     // Saltar rate limiting en desarrollo para localhost
     return process.env.NODE_ENV !== 'production' && 
