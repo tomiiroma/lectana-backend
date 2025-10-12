@@ -111,6 +111,7 @@ export async function actualizarPerfilDocente(usuarioId, updates) {
   if (updates.email) usuarioUpdates.email = updates.email;
   if (updates.edad) usuarioUpdates.edad = updates.edad;
 
+  if (updates.dni) docenteUpdates.dni = updates.dni;
   if (updates.telefono !== undefined) docenteUpdates.telefono = updates.telefono;
   if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
   if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;

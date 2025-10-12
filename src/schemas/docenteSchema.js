@@ -30,6 +30,7 @@ export const actualizarPerfilSchema = z.object({
   apellido: z.string().min(2).max(50).optional(),
   email: z.string().email().optional(),
   edad: z.number().int().min(18).max(80).optional(),
+  dni: z.string().min(6).optional(),
   telefono: z.string().optional(),
   institucion_nombre: z.string().min(1).optional(),
   institucion_pais: z.string().min(1).optional(),
