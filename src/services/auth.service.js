@@ -14,14 +14,20 @@ export async function login({ email, password }) {
   if (!jwtSecret) throw new Error('JWT_SECRET no configurado');
 
   // Buscar usuario por email
-  const { data: usuario, error: errUsr } = await supabaseAdmin
+  const { data: usuarios, error: errUsr } = await supabaseAdmin
     .from('usuario')
     .select('*')
-    .eq('email', email)
-    .single();
+    .eq('email', email);
 
   if (errUsr) throw new Error(errUsr.message);
-  if (!usuario) throw new Error('Credenciales inválidas');
+  if (!usuarios || usuarios.length === 0) throw new Error('Credenciales inválidas');
+  
+  // Si hay múltiples usuarios con el mismo email, tomar el primero activo
+  const usuario = usuarios.find(u => u.activo) || usuarios[0];
+  
+  if (usuarios.length > 1) {
+    console.warn(`⚠️ Múltiples usuarios encontrados para email: ${email}. Usando el primero activo o el primero disponible.`);
+  }
 
   const ok = await bcrypt.compare(password, usuario.password);
   if (!ok) throw new Error('Credenciales inválidas');
