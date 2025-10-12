@@ -29,7 +29,7 @@ export async function login({ email, password }) {
   // Detectar rol
   const { data: docenteRow } = await supabaseAdmin
     .from('docente')
-    .select('id_docente, verificado')
+    .select('id_docente, dni, telefono, institucion_nombre, institucion_pais, institucion_provincia, nivel_educativo, verificado')
     .eq('usuario_id_usuario', usuario.id_usuario)
     .maybeSingle();
 
