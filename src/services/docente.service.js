@@ -9,7 +9,7 @@ export async function crearDocente({ usuario_id_usuario, dni, telefono, instituc
     institucion_nombre: institucion_nombre || '',
     institucion_pais: institucion_pais || '',
     institucion_provincia: institucion_provincia || '',
-    nivel_educativo: nivel_educativo || 'PRIMARIA',
+    nivel_educativo: (nivel_educativo || 'PRIMARIA').toLowerCase(),
     verificado,
     usuario_id_usuario
   };
@@ -113,7 +113,7 @@ export async function actualizarPerfilDocente(usuarioId, updates) {
   if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
   if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;
   if (updates.institucion_provincia) docenteUpdates.institucion_provincia = updates.institucion_provincia;
-  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo;
+  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo.toLowerCase();
 
   // Actualizar usuario si hay cambios
   if (Object.keys(usuarioUpdates).length > 0) {
@@ -184,7 +184,7 @@ export async function adminActualizarDocente(docenteId, updates) {
   if (updates.institucion_nombre) docenteUpdates.institucion_nombre = updates.institucion_nombre;
   if (updates.institucion_pais) docenteUpdates.institucion_pais = updates.institucion_pais;
   if (updates.institucion_provincia) docenteUpdates.institucion_provincia = updates.institucion_provincia;
-  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo;
+  if (updates.nivel_educativo) docenteUpdates.nivel_educativo = updates.nivel_educativo.toLowerCase();
   if (updates.verificado !== undefined) docenteUpdates.verificado = updates.verificado;
 
   // Actualizar usuario si hay cambios
