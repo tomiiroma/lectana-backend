@@ -20,6 +20,7 @@ import {
   obtenerAulaDocente,
   actualizarAulaDocente
 } from '../services/aula.service.js';
+import { agregarCuentoAulaDocente, quitarCuentoAulaDocente } from '../services/aula.service.js';
 
 import { crearAulaSchema,  actualizarAulaSchema, asignarCuentoSchema, asignarAlumnoSchema,asignarDocenteSchema, idSchema, asignarEstudiantesSchema,asignarCuentosSchema} from '../schemas/aulaSchema.js';
 
@@ -277,6 +278,59 @@ export async function asignarCuentosAulaDocenteController(req, res, next) {
       return res.status(403).json({ ok: false, error: error.message });
     }
     next(error);
+  }
+}
+
+// Agregar cuento puntual (POST /aulas/docente/:id/cuentos)
+export async function agregarCuentoAulaDocenteController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params); // id_aula
+    const body = z.object({ id_cuento: z.number().int().positive() }).parse(req.body);
+    const docenteId = req.user.docente_id;
+
+    if (!docenteId) {
+      return res.status(403).json({ ok: false, error: 'Acceso denegado. Solo los docentes pueden modificar aulas.' });
+    }
+
+    // Idempotencia: si ya existe, el servicio no duplicará
+    const result = await agregarCuentoAulaDocente(id, body.id_cuento, docenteId);
+    return res.status(200).json({ ok: true, message: 'Cuento agregado al aula', data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    const msg = String(error.message).toLowerCase();
+    if (msg.includes('no autorizado')) return res.status(403).json({ ok: false, error: error.message });
+    if (msg.includes('no encontrada') || msg.includes('no encontrado')) return res.status(404).json({ ok: false, error: error.message });
+    return next(error);
+  }
+}
+
+// Quitar cuento puntual (DELETE /aulas/docente/:id/cuentos/:id_cuento)
+export async function quitarCuentoAulaDocenteController(req, res, next) {
+  try {
+    const params = z.object({ id: z.string(), id_cuento: z.string() }).parse(req.params);
+    const id = parseInt(params.id);
+    const id_cuento = parseInt(params.id_cuento);
+    if (!Number.isInteger(id) || !Number.isInteger(id_cuento)) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos' });
+    }
+    const docenteId = req.user.docente_id;
+    if (!docenteId) {
+      return res.status(403).json({ ok: false, error: 'Acceso denegado. Solo los docentes pueden modificar aulas.' });
+    }
+
+    const result = await quitarCuentoAulaDocente(id, id_cuento, docenteId);
+    return res.status(200).json({ ok: true, message: 'Cuento removido del aula', data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    const msg = String(error.message).toLowerCase();
+    if (msg.includes('no autorizado')) return res.status(403).json({ ok: false, error: error.message });
+    if (msg.includes('asignación no encontrada')) return res.status(404).json({ ok: false, error: 'No estaba asignado' });
+    if (msg.includes('no encontrada') || msg.includes('no encontrado')) return res.status(404).json({ ok: false, error: error.message });
+    return next(error);
   }
 }
 

@@ -555,6 +555,102 @@ export async function asignarCuentosAulaDocente(aulaId, cuentosIds, docenteId) {
   }
 }
 
+// Agregar un cuento puntual a un aula (docente propietario)
+export async function agregarCuentoAulaDocente(aulaId, cuentoId, docenteId) {
+  // Verificar aula y propiedad
+  const { data: aula, error: aulaError } = await supabaseAdmin
+    .from('aula')
+    .select('id_aula, docente_id_docente')
+    .eq('id_aula', aulaId)
+    .single();
+
+  if (aulaError || !aula) throw new Error('Aula no encontrada');
+  if (aula.docente_id_docente !== docenteId) {
+    throw new Error('No autorizado. Solo puedes modificar tus propias aulas.');
+  }
+
+  // Verificar cuento
+  const { data: cuento, error: cuentoError } = await supabaseAdmin
+    .from('cuento')
+    .select('id_cuento')
+    .eq('id_cuento', cuentoId)
+    .single();
+  if (cuentoError || !cuento) throw new Error('Cuento no encontrado');
+
+  // Verificar si ya existe la relación (idempotencia)
+  const { data: existente, error: existeError } = await supabaseAdmin
+    .from('aula_has_cuento')
+    .select('aula_id_aula, cuento_id_cuento')
+    .eq('aula_id_aula', aulaId)
+    .eq('cuento_id_cuento', cuentoId)
+    .maybeSingle();
+  if (existeError) throw new Error(`Error al validar asignación: ${existeError.message}`);
+
+  if (!existente) {
+    const { error: insertError } = await supabaseAdmin
+      .from('aula_has_cuento')
+      .insert({ aula_id_aula: aulaId, cuento_id_cuento: cuentoId });
+    if (insertError) throw new Error(`Error al agregar cuento: ${insertError.message}`);
+  }
+
+  // Devolver lista resultante de ids
+  const { data: asignaciones, error: listError } = await supabaseAdmin
+    .from('aula_has_cuento')
+    .select('cuento_id_cuento')
+    .eq('aula_id_aula', aulaId);
+  if (listError) throw new Error(`Error al obtener lista de cuentos: ${listError.message}`);
+
+  return {
+    aula_id: aulaId,
+    cuentos_ids: (asignaciones || []).map(r => r.cuento_id_cuento)
+  };
+}
+
+// Quitar un cuento puntual de un aula (docente propietario)
+export async function quitarCuentoAulaDocente(aulaId, cuentoId, docenteId) {
+  // Verificar aula y propiedad
+  const { data: aula, error: aulaError } = await supabaseAdmin
+    .from('aula')
+    .select('id_aula, docente_id_docente')
+    .eq('id_aula', aulaId)
+    .single();
+  if (aulaError || !aula) throw new Error('Aula no encontrada');
+  if (aula.docente_id_docente !== docenteId) {
+    throw new Error('No autorizado. Solo puedes modificar tus propias aulas.');
+  }
+
+  // Verificar asignación existente
+  const { data: existente, error: existeError } = await supabaseAdmin
+    .from('aula_has_cuento')
+    .select('aula_id_aula, cuento_id_cuento')
+    .eq('aula_id_aula', aulaId)
+    .eq('cuento_id_cuento', cuentoId)
+    .maybeSingle();
+  if (existeError) throw new Error(`Error al validar asignación: ${existeError.message}`);
+  if (!existente) {
+    throw new Error('Asignación no encontrada');
+  }
+
+  const { error: deleteError } = await supabaseAdmin
+    .from('aula_has_cuento')
+    .delete()
+    .eq('aula_id_aula', aulaId)
+    .eq('cuento_id_cuento', cuentoId);
+  if (deleteError) throw new Error(`Error al quitar cuento: ${deleteError.message}`);
+
+  // Devolver lista resultante
+  const { data: asignaciones, error: listError } = await supabaseAdmin
+    .from('aula_has_cuento')
+    .select('cuento_id_cuento')
+    .eq('aula_id_aula', aulaId);
+  if (listError) throw new Error(`Error al obtener lista de cuentos: ${listError.message}`);
+
+  return {
+    aula_id: aulaId,
+    cuentos_ids: (asignaciones || []).map(r => r.cuento_id_cuento)
+  };
+}
+
 // Función para que docentes vean sus aulas
 export async function listarAulasDocente(docenteId) {
   const { data: aulas, error } = await supabaseAdmin
