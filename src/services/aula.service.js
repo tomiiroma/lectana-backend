@@ -161,11 +161,11 @@ export async function obtenerAulaPorId(id) {
     })) || [];
 
   const cuentos = cuentosResult.data?.map(item => {
-    const idCuentoRel = item.cuento_id_cuento;
-    const idCuentoObj = item.cuento?.id_cuento;
-    const id_cuento = typeof idCuentoRel === 'number' && idCuentoRel > 0
-      ? idCuentoRel
-      : (typeof idCuentoObj === 'number' && idCuentoObj > 0 ? idCuentoObj : null);
+    // Usar directamente el ID de la relación (cuento_id_cuento)
+    const id_cuento = typeof item.cuento_id_cuento === 'number' && item.cuento_id_cuento > 0
+      ? item.cuento_id_cuento
+      : null;
+    
     return {
       id_cuento,
       id_asignacion: typeof item.id === 'number' && item.id > 0 ? item.id : undefined,
