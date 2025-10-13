@@ -116,7 +116,7 @@ export async function obtenerAulaPorId(id) {
     }
 
     // Consultas paralelas para estudiantes y cuentos (más eficiente)
-    const [estudiantesResult, cuentosResult] = await Promise.all([
+  const [estudiantesResult, cuentosResult] = await Promise.all([
       supabaseAdmin
         .from('alumno_has_aula')
         .select(`
@@ -127,18 +127,21 @@ export async function obtenerAulaPorId(id) {
         `)
         .eq('aula_id_aula', id),
       
-      supabaseAdmin
-        .from('aula_has_cuento')
-        .select(`
-          cuento:cuento_id_cuento(
-            id_cuento,
-            titulo,
-            edad_publico,
-            autor:autor_id_autor(nombre, apellido),
-            genero:genero_id_genero(nombre)
-          )
-        `)
-        .eq('aula_id_aula', id)
+    supabaseAdmin
+      .from('aula_has_cuento')
+      .select(`
+        id,
+        cuento:cuento_id_cuento(
+          id_cuento,
+          titulo,
+          edad_publico,
+          url_img,
+          duracion,
+          autor:autor_id_autor(nombre, apellido),
+          genero:genero_id_genero(nombre)
+        )
+      `)
+      .eq('aula_id_aula', id)
     ]);
 
     // Verificar errores
@@ -156,13 +159,16 @@ export async function obtenerAulaPorId(id) {
       usuario: item.alumno.usuario
     })) || [];
 
-    const cuentos = cuentosResult.data?.map(item => ({
-      id: item.cuento.id_cuento,
-      titulo: item.cuento.titulo,
-      edad_publico: item.cuento.edad_publico,
-      autor: item.cuento.autor,
-      genero: item.cuento.genero
-    })) || [];
+  const cuentos = cuentosResult.data?.map(item => ({
+    id_cuento: item.cuento?.id_cuento,
+    id_asignacion: item.id ?? undefined,
+    titulo: item.cuento?.titulo,
+    edad_publico: item.cuento?.edad_publico,
+    url_img: item.cuento?.url_img,
+    duracion: item.cuento?.duracion,
+    autor: item.cuento?.autor,
+    genero: item.cuento?.genero
+  })) || [];
 
     return {
       ...aula,
