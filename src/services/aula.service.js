@@ -586,6 +586,7 @@ export async function agregarCuentoAulaDocente(aulaId, cuentoId, docenteId) {
     .maybeSingle();
   if (existeError) throw new Error(`Error al validar asignación: ${existeError.message}`);
 
+  // Idempotente: si ya estaba, no duplicar; tratar como éxito
   if (!existente) {
     const { error: insertError } = await supabaseAdmin
       .from('aula_has_cuento')
@@ -627,16 +628,15 @@ export async function quitarCuentoAulaDocente(aulaId, cuentoId, docenteId) {
     .eq('cuento_id_cuento', cuentoId)
     .maybeSingle();
   if (existeError) throw new Error(`Error al validar asignación: ${existeError.message}`);
-  if (!existente) {
-    throw new Error('Asignación no encontrada');
+  // Idempotente: si no existía, devolvemos estado actual sin error
+  if (existente) {
+    const { error: deleteError } = await supabaseAdmin
+      .from('aula_has_cuento')
+      .delete()
+      .eq('aula_id_aula', aulaId)
+      .eq('cuento_id_cuento', cuentoId);
+    if (deleteError) throw new Error(`Error al quitar cuento: ${deleteError.message}`);
   }
-
-  const { error: deleteError } = await supabaseAdmin
-    .from('aula_has_cuento')
-    .delete()
-    .eq('aula_id_aula', aulaId)
-    .eq('cuento_id_cuento', cuentoId);
-  if (deleteError) throw new Error(`Error al quitar cuento: ${deleteError.message}`);
 
   // Devolver lista resultante
   const { data: asignaciones, error: listError } = await supabaseAdmin
