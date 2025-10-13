@@ -738,6 +738,8 @@ export async function obtenerAulaDocente(aulaId, docenteId) {
       supabaseAdmin
         .from('aula_has_cuento')
         .select(`
+          id,
+          cuento_id_cuento,
           cuento:cuento_id_cuento(
             id_cuento,
             titulo,
@@ -767,7 +769,8 @@ export async function obtenerAulaDocente(aulaId, docenteId) {
     })) || [];
 
     const cuentos = cuentosResult.data?.map(item => ({
-      id: item.cuento.id_cuento,
+      id_cuento: item.cuento_id_cuento,
+      id_asignacion: item.id,
       titulo: item.cuento.titulo,
       edad_publico: item.cuento.edad_publico,
       url_img: item.cuento.url_img,
