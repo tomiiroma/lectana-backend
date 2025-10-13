@@ -131,6 +131,7 @@ export async function obtenerAulaPorId(id) {
       .from('aula_has_cuento')
       .select(`
         id,
+        cuento_id_cuento,
         cuento:cuento_id_cuento(
           id_cuento,
           titulo,
@@ -159,16 +160,23 @@ export async function obtenerAulaPorId(id) {
       usuario: item.alumno.usuario
     })) || [];
 
-  const cuentos = cuentosResult.data?.map(item => ({
-    id_cuento: item.cuento?.id_cuento,
-    id_asignacion: item.id ?? undefined,
-    titulo: item.cuento?.titulo,
-    edad_publico: item.cuento?.edad_publico,
-    url_img: item.cuento?.url_img,
-    duracion: item.cuento?.duracion,
-    autor: item.cuento?.autor,
-    genero: item.cuento?.genero
-  })) || [];
+  const cuentos = cuentosResult.data?.map(item => {
+    const idCuentoRel = item.cuento_id_cuento;
+    const idCuentoObj = item.cuento?.id_cuento;
+    const id_cuento = typeof idCuentoRel === 'number' && idCuentoRel > 0
+      ? idCuentoRel
+      : (typeof idCuentoObj === 'number' && idCuentoObj > 0 ? idCuentoObj : null);
+    return {
+      id_cuento,
+      id_asignacion: typeof item.id === 'number' && item.id > 0 ? item.id : undefined,
+      titulo: item.cuento?.titulo,
+      edad_publico: item.cuento?.edad_publico,
+      url_img: item.cuento?.url_img,
+      duracion: item.cuento?.duracion,
+      autor: item.cuento?.autor,
+      genero: item.cuento?.genero
+    };
+  }) || [];
 
     return {
       ...aula,
