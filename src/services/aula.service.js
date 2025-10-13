@@ -686,15 +686,31 @@ export async function listarAulasDocente(docenteId) {
     throw new Error(`Error al listar aulas del docente: ${error.message}`);
   }
 
-  // Formatear la respuesta para incluir nombre completo del docente
-  const aulasFormateadas = aulas.map(aula => ({
-    ...aula,
-    docente_nombre: aula.docente?.usuario ? 
-      `${aula.docente.usuario.nombre} ${aula.docente.usuario.apellido}` : 
-      null
-  }));
+  // Para cada aula, contar los cuentos asignados
+  const aulasConCuentos = await Promise.all(
+    aulas.map(async (aula) => {
+      const { count: totalCuentos } = await supabaseAdmin
+        .from('aula_has_cuento')
+        .select('*', { count: 'exact', head: true })
+        .eq('aula_id_aula', aula.id_aula);
 
-  return aulasFormateadas;
+      const { count: totalEstudiantes } = await supabaseAdmin
+        .from('alumno_has_aula')
+        .select('*', { count: 'exact', head: true })
+        .eq('aula_id_aula', aula.id_aula);
+
+      return {
+        ...aula,
+        total_cuentos: totalCuentos || 0,
+        total_estudiantes: totalEstudiantes || 0,
+        docente_nombre: aula.docente?.usuario ? 
+          `${aula.docente.usuario.nombre} ${aula.docente.usuario.apellido}` : 
+          null
+      };
+    })
+  );
+
+  return aulasConCuentos;
 }
 
 // Función para que docentes vean el detalle de su aula
