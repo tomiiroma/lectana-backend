@@ -130,7 +130,7 @@ export async function obtenerAulaPorId(id) {
     supabaseAdmin
       .from('aula_has_cuento')
       .select(`
-        id,
+        aula_id_aula,
         cuento_id_cuento,
         cuento:cuento_id_cuento(
           id_cuento,
@@ -168,7 +168,6 @@ export async function obtenerAulaPorId(id) {
     
     return {
       id_cuento,
-      id_asignacion: typeof item.id === 'number' && item.id > 0 ? item.id : undefined,
       titulo: item.cuento?.titulo,
       edad_publico: item.cuento?.edad_publico,
       url_img: item.cuento?.url_img,
@@ -738,7 +737,7 @@ export async function obtenerAulaDocente(aulaId, docenteId) {
       supabaseAdmin
         .from('aula_has_cuento')
         .select(`
-          id,
+          aula_id_aula,
           cuento_id_cuento,
           cuento:cuento_id_cuento(
             id_cuento,
@@ -770,7 +769,6 @@ export async function obtenerAulaDocente(aulaId, docenteId) {
 
     const cuentos = cuentosResult.data?.map(item => ({
       id_cuento: item.cuento_id_cuento,
-      id_asignacion: item.id,
       titulo: item.cuento.titulo,
       edad_publico: item.cuento.edad_publico,
       url_img: item.cuento.url_img,
