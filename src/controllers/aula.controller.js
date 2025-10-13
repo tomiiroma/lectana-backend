@@ -225,7 +225,7 @@ export async function asignarCuentosAulaController(req, res, next) {
 export async function crearAulaDocenteController(req, res, next) {
   try {
     const data = crearAulaSchema.parse(req.body);
-    const docenteId = req.user.docente_id_docente; // Obtener ID del docente desde el token
+    const docenteId = req.user.docente_id; // Obtener ID del docente desde el token
     
     if (!docenteId) {
       return res.status(403).json({ 
@@ -253,7 +253,7 @@ export async function asignarCuentosAulaDocenteController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
     const { cuentos_ids } = asignarCuentosSchema.parse(req.body);
-    const docenteId = req.user.docente_id_docente;
+    const docenteId = req.user.docente_id;
     
     if (!docenteId) {
       return res.status(403).json({ 
@@ -283,7 +283,7 @@ export async function asignarCuentosAulaDocenteController(req, res, next) {
 // Controlador para que docentes vean sus aulas
 export async function listarAulasDocenteController(req, res, next) {
   try {
-    const docenteId = req.user.docente_id_docente;
+    const docenteId = req.user.docente_id;
     
     if (!docenteId) {
       return res.status(403).json({ 
@@ -303,7 +303,7 @@ export async function listarAulasDocenteController(req, res, next) {
 export async function obtenerAulaDocenteController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
-    const docenteId = req.user.docente_id_docente;
+    const docenteId = req.user.docente_id;
     
     if (!docenteId) {
       return res.status(403).json({ 
@@ -333,7 +333,7 @@ export async function actualizarAulaDocenteController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
     const data = actualizarAulaSchema.parse(req.body);
-    const docenteId = req.user.docente_id_docente;
+    const docenteId = req.user.docente_id;
     
     if (!docenteId) {
       return res.status(403).json({ 
