@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 import {
   crearAulaController,
+  crearAulaDocenteController,
   listarAulasController,
   obtenerAulaController,
   actualizarAulaController,
@@ -14,7 +15,11 @@ import {
   quitarDocenteAulaController,
   estadisticasAulasController,
   asignarEstudiantesAulaController,
-  asignarCuentosAulaController
+  asignarCuentosAulaController,
+  asignarCuentosAulaDocenteController,
+  listarAulasDocenteController,
+  obtenerAulaDocenteController,
+  actualizarAulaDocenteController
 } from '../controllers/aula.controller.js';
 import { obtenerActividadesDeAulaController } from '../controllers/actividad.controller.js';
 
@@ -25,6 +30,13 @@ router.use((req, res, next) => {
   if (limiter) return limiter(req, res, next);
   next();
 });
+
+// Rutas específicas para docentes
+router.post('/docente', requireAuth, requireRole('docente'), crearAulaDocenteController);
+router.get('/docente', requireAuth, requireRole('docente'), listarAulasDocenteController);
+router.get('/docente/:id', requireAuth, requireRole('docente'), obtenerAulaDocenteController);
+router.put('/docente/:id', requireAuth, requireRole('docente'), actualizarAulaDocenteController);
+router.put('/docente/:id/cuentos', requireAuth, requireRole('docente'), asignarCuentosAulaDocenteController);
 
 // Rutas protegidas para administradores
 router.post('/', requireAuth, requireRole('administrador'), crearAulaController);

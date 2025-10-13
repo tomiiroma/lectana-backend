@@ -62,6 +62,40 @@ export async function crearAula(data) {
   }
 }
 
+// Función específica para que docentes creen aulas y se asignen automáticamente
+export async function crearAulaDocente(data, docenteId) {
+  try {
+    // Generar código de acceso único
+    const codigoAcceso = await generarCodigoUnico();
+    
+    const aulaData = {
+      nombre_aula: data.nombre_aula,
+      grado: data.grado,
+      codigo_acceso: codigoAcceso,
+      docente_id_docente: docenteId // Asignar automáticamente al docente creador
+    };
+
+    const { data: aula, error } = await supabaseAdmin
+      .from('aula')
+      .insert(aulaData)
+      .select(`
+        *,
+        docente:docente_id_docente(
+          usuario:usuario_id_usuario(nombre, apellido, email)
+        )
+      `)
+      .single();
+
+    if (error) {
+      throw new Error(`Error al crear aula: ${error.message}`);
+    }
+
+    return aula;
+  } catch (error) {
+    throw new Error(`Error al procesar aula: ${error.message}`);
+  }
+}
+
 export async function obtenerAulaPorId(id) {
   try {
     // Consulta optimizada: obtener aula con docente en una sola consulta
@@ -446,5 +480,260 @@ export async function asignarCuentosAula(aulaId, cuentosIds) {
     };
   } catch (error) {
     throw new Error(`Error al asignar cuentos al aula: ${error.message}`);
+  }
+}
+
+// Función específica para que docentes asignen cuentos a sus propias aulas
+export async function asignarCuentosAulaDocente(aulaId, cuentosIds, docenteId) {
+  try {
+    // Verificar que el aula existe y pertenece al docente
+    const { data: aula, error: aulaError } = await supabaseAdmin
+      .from('aula')
+      .select('id_aula, docente_id_docente')
+      .eq('id_aula', aulaId)
+      .single();
+
+    if (aulaError || !aula) {
+      throw new Error('Aula no encontrada');
+    }
+
+    // Verificar que el docente es propietario del aula
+    if (aula.docente_id_docente !== docenteId) {
+      throw new Error('No autorizado. Solo puedes asignar cuentos a tus propias aulas.');
+    }
+
+    // Verificar que todos los cuentos existen
+    if (cuentosIds.length > 0) {
+      const { data: cuentos, error: cuentosError } = await supabaseAdmin
+        .from('cuento')
+        .select('id_cuento')
+        .in('id_cuento', cuentosIds);
+
+      if (cuentosError) {
+        throw new Error(`Error al verificar cuentos: ${cuentosError.message}`);
+      }
+
+      if (cuentos.length !== cuentosIds.length) {
+        throw new Error('Uno o más cuentos no existen');
+      }
+    }
+
+    // Eliminar asignaciones existentes
+    const { error: deleteError } = await supabaseAdmin
+      .from('aula_has_cuento')
+      .delete()
+      .eq('aula_id_aula', aulaId);
+
+    if (deleteError) {
+      throw new Error(`Error al eliminar asignaciones existentes: ${deleteError.message}`);
+    }
+
+    // Insertar nuevas asignaciones
+    if (cuentosIds.length > 0) {
+      const nuevasAsignaciones = cuentosIds.map(cuentoId => ({
+        aula_id_aula: aulaId,
+        cuento_id_cuento: cuentoId
+      }));
+
+      const { error: insertError } = await supabaseAdmin
+        .from('aula_has_cuento')
+        .insert(nuevasAsignaciones);
+
+      if (insertError) {
+        throw new Error(`Error al asignar cuentos: ${insertError.message}`);
+      }
+    }
+
+    return {
+      aula_id: aulaId,
+      cuentos_asignados: cuentosIds.length,
+      cuentos_ids: cuentosIds,
+      docente_id: docenteId
+    };
+  } catch (error) {
+    throw new Error(`Error al asignar cuentos al aula: ${error.message}`);
+  }
+}
+
+// Función para que docentes vean sus aulas
+export async function listarAulasDocente(docenteId) {
+  const { data: aulas, error } = await supabaseAdmin
+    .from('aula')
+    .select(`
+      id_aula,
+      nombre_aula,
+      grado,
+      codigo_acceso,
+      docente_id_docente,
+      docente:docente_id_docente(
+        usuario_id_usuario,
+        usuario:usuario_id_usuario(nombre, apellido)
+      )
+    `)
+    .eq('docente_id_docente', docenteId)
+    .order('nombre_aula', { ascending: true });
+
+  if (error) {
+    throw new Error(`Error al listar aulas del docente: ${error.message}`);
+  }
+
+  // Formatear la respuesta para incluir nombre completo del docente
+  const aulasFormateadas = aulas.map(aula => ({
+    ...aula,
+    docente_nombre: aula.docente?.usuario ? 
+      `${aula.docente.usuario.nombre} ${aula.docente.usuario.apellido}` : 
+      null
+  }));
+
+  return aulasFormateadas;
+}
+
+// Función para que docentes vean el detalle de su aula
+export async function obtenerAulaDocente(aulaId, docenteId) {
+  try {
+    // Verificar que el aula existe y pertenece al docente
+    const { data: aula, error: aulaError } = await supabaseAdmin
+      .from('aula')
+      .select(`
+        *,
+        docente:docente_id_docente(
+          *,
+          usuario:usuario_id_usuario(nombre, apellido, email)
+        )
+      `)
+      .eq('id_aula', aulaId)
+      .single();
+
+    if (aulaError) {
+      throw new Error('Aula no encontrada');
+    }
+
+    // Verificar que el docente es propietario del aula
+    if (aula.docente_id_docente !== docenteId) {
+      throw new Error('No autorizado. Solo puedes ver tus propias aulas.');
+    }
+
+    // Consultas paralelas para estudiantes y cuentos (más eficiente)
+    const [estudiantesResult, cuentosResult] = await Promise.all([
+      supabaseAdmin
+        .from('alumno_has_aula')
+        .select(`
+          alumno:alumno_id_alumno(
+            id_alumno,
+            usuario:usuario_id_usuario(nombre, apellido, email)
+          )
+        `)
+        .eq('aula_id_aula', aulaId),
+      
+      supabaseAdmin
+        .from('aula_has_cuento')
+        .select(`
+          cuento:cuento_id_cuento(
+            id_cuento,
+            titulo,
+            edad_publico,
+            url_img,
+            duracion,
+            autor:autor_id_autor(nombre, apellido),
+            genero:genero_id_genero(nombre)
+          )
+        `)
+        .eq('aula_id_aula', aulaId)
+    ]);
+
+    // Verificar errores
+    if (estudiantesResult.error) {
+      throw new Error(`Error al obtener estudiantes: ${estudiantesResult.error.message}`);
+    }
+    
+    if (cuentosResult.error) {
+      throw new Error(`Error al obtener cuentos: ${cuentosResult.error.message}`);
+    }
+
+    // Formatear la respuesta
+    const estudiantes = estudiantesResult.data?.map(item => ({
+      id: item.alumno.id_alumno,
+      usuario: item.alumno.usuario
+    })) || [];
+
+    const cuentos = cuentosResult.data?.map(item => ({
+      id: item.cuento.id_cuento,
+      titulo: item.cuento.titulo,
+      edad_publico: item.cuento.edad_publico,
+      url_img: item.cuento.url_img,
+      duracion: item.cuento.duracion,
+      autor: item.cuento.autor,
+      genero: item.cuento.genero
+    })) || [];
+
+    return {
+      ...aula,
+      estudiantes,
+      cuentos,
+      total_estudiantes: estudiantes.length,
+      total_cuentos: cuentos.length,
+      estadisticas: {
+        total_estudiantes: estudiantes.length,
+        total_cuentos: cuentos.length,
+        tiene_docente: aula.docente_id_docente !== null
+      }
+    };
+  } catch (error) {
+    throw new Error(`Error al obtener aula: ${error.message}`);
+  }
+}
+
+// Función para que docentes actualicen sus aulas
+export async function actualizarAulaDocente(aulaId, data, docenteId) {
+  try {
+    // Verificar que el aula existe y pertenece al docente
+    const { data: aula, error: aulaError } = await supabaseAdmin
+      .from('aula')
+      .select('id_aula, docente_id_docente')
+      .eq('id_aula', aulaId)
+      .single();
+
+    if (aulaError) {
+      throw new Error('Aula no encontrada');
+    }
+
+    // Verificar que el docente es propietario del aula
+    if (aula.docente_id_docente !== docenteId) {
+      throw new Error('No autorizado. Solo puedes actualizar tus propias aulas.');
+    }
+
+    // Filtrar datos que el docente puede actualizar (no puede cambiar el docente_id_docente)
+    const datosPermitidos = {
+      nombre_aula: data.nombre_aula,
+      grado: data.grado
+    };
+
+    // Eliminar campos undefined
+    Object.keys(datosPermitidos).forEach(key => {
+      if (datosPermitidos[key] === undefined) {
+        delete datosPermitidos[key];
+      }
+    });
+
+    // Actualizar el aula
+    const { data: aulaActualizada, error: updateError } = await supabaseAdmin
+      .from('aula')
+      .update(datosPermitidos)
+      .eq('id_aula', aulaId)
+      .select(`
+        *,
+        docente:docente_id_docente(
+          usuario:usuario_id_usuario(nombre, apellido, email)
+        )
+      `)
+      .single();
+
+    if (updateError) {
+      throw new Error(`Error al actualizar aula: ${updateError.message}`);
+    }
+
+    return aulaActualizada;
+  } catch (error) {
+    throw new Error(`Error al actualizar aula: ${error.message}`);
   }
 }

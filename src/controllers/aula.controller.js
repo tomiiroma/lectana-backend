@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { 
   crearAula, 
+  crearAulaDocente,
   obtenerAulaPorId, 
   listarAulas, 
   actualizarAula, 
@@ -13,7 +14,11 @@ import {
   quitarDocenteAula,
   contarAulas,
   asignarEstudiantesAula,
-  asignarCuentosAula
+  asignarCuentosAula,
+  asignarCuentosAulaDocente,
+  listarAulasDocente,
+  obtenerAulaDocente,
+  actualizarAulaDocente
 } from '../services/aula.service.js';
 
 import { crearAulaSchema,  actualizarAulaSchema, asignarCuentoSchema, asignarAlumnoSchema,asignarDocenteSchema, idSchema, asignarEstudiantesSchema,asignarCuentosSchema} from '../schemas/aulaSchema.js';
@@ -212,6 +217,147 @@ export async function asignarCuentosAulaController(req, res, next) {
       message: 'Cuentos asignados al aula exitosamente'
     });
   } catch (error) {
+    next(error);
+  }
+}
+
+// Controlador para que docentes creen aulas
+export async function crearAulaDocenteController(req, res, next) {
+  try {
+    const data = crearAulaSchema.parse(req.body);
+    const docenteId = req.user.docente_id_docente; // Obtener ID del docente desde el token
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden crear aulas.' 
+      });
+    }
+
+    const result = await crearAulaDocente(data, docenteId);
+    res.status(201).json({ 
+      ok: true, 
+      data: result,
+      message: 'Aula creada exitosamente'
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    next(error);
+  }
+}
+
+// Controlador para que docentes asignen cuentos a sus aulas
+export async function asignarCuentosAulaDocenteController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const { cuentos_ids } = asignarCuentosSchema.parse(req.body);
+    const docenteId = req.user.docente_id_docente;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden asignar cuentos.' 
+      });
+    }
+
+    const result = await asignarCuentosAulaDocente(id, cuentos_ids, docenteId);
+    
+    res.status(200).json({
+      ok: true,
+      data: result,
+      message: 'Cuentos asignados al aula exitosamente'
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no autorizado')) {
+      return res.status(403).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+// Controlador para que docentes vean sus aulas
+export async function listarAulasDocenteController(req, res, next) {
+  try {
+    const docenteId = req.user.docente_id_docente;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden ver sus aulas.' 
+      });
+    }
+
+    const result = await listarAulasDocente(docenteId);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Controlador para que docentes vean el detalle de su aula
+export async function obtenerAulaDocenteController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const docenteId = req.user.docente_id_docente;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden ver aulas.' 
+      });
+    }
+
+    const result = await obtenerAulaDocente(id, docenteId);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no autorizado')) {
+      return res.status(403).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+// Controlador para que docentes actualicen sus aulas
+export async function actualizarAulaDocenteController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const data = actualizarAulaSchema.parse(req.body);
+    const docenteId = req.user.docente_id_docente;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden actualizar aulas.' 
+      });
+    }
+
+    const result = await actualizarAulaDocente(id, data, docenteId);
+    res.json({ 
+      ok: true, 
+      data: result,
+      message: 'Aula actualizada exitosamente'
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no autorizado')) {
+      return res.status(403).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
     next(error);
   }
 }
