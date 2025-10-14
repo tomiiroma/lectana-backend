@@ -18,9 +18,10 @@ import {
   asignarCuentosAulaDocente,
   listarAulasDocente,
   obtenerAulaDocente,
-  actualizarAulaDocente
+  actualizarAulaDocente,
+  eliminarAulaDocente
 } from '../services/aula.service.js';
-import { agregarCuentoAulaDocente, quitarCuentoAulaDocente } from '../services/aula.service.js';
+import { agregarCuentoAulaDocente, quitarCuentoAulaDocente, quitarEstudianteAulaDocente, obtenerActividadesEstudianteAula } from '../services/aula.service.js';
 
 import { crearAulaSchema,  actualizarAulaSchema, asignarCuentoSchema, asignarAlumnoSchema,asignarDocenteSchema, idSchema, asignarEstudiantesSchema,asignarCuentosSchema} from '../schemas/aulaSchema.js';
 
@@ -401,6 +402,133 @@ export async function actualizarAulaDocenteController(req, res, next) {
       ok: true, 
       data: result,
       message: 'Aula actualizada exitosamente'
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no autorizado')) {
+      return res.status(403).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+// Controlador para que docentes eliminen sus aulas
+export async function eliminarAulaDocenteController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const docenteId = req.user.docente_id;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden eliminar aulas.' 
+      });
+    }
+
+    const result = await eliminarAulaDocente(id, docenteId);
+    res.json({ 
+      ok: true, 
+      message: 'Aula eliminada correctamente',
+      data: null
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no autorizado')) {
+      return res.status(403).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrada')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('estudiantes asignados')) {
+      return res.status(400).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+// Controlador para que docentes quiten estudiantes de sus aulas
+export async function quitarEstudianteAulaDocenteController(req, res, next) {
+  try {
+    const params = z.object({ 
+      id: z.string(), 
+      id_estudiante: z.string() 
+    }).parse(req.params);
+    
+    const aulaId = parseInt(params.id);
+    const estudianteId = parseInt(params.id_estudiante);
+    
+    if (!Number.isInteger(aulaId) || !Number.isInteger(estudianteId)) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos' });
+    }
+    
+    const docenteId = req.user.docente_id;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden quitar estudiantes.' 
+      });
+    }
+
+    const result = await quitarEstudianteAulaDocente(aulaId, estudianteId, docenteId);
+    res.json({ 
+      ok: true, 
+      message: 'Estudiante removido del aula correctamente',
+      data: result
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    if (String(error.message).toLowerCase().includes('no autorizado')) {
+      return res.status(403).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    if (String(error.message).toLowerCase().includes('no está asignado')) {
+      return res.status(400).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+// Controlador para obtener actividades de un estudiante específico en un aula
+export async function obtenerActividadesEstudianteAulaController(req, res, next) {
+  try {
+    const params = z.object({ 
+      id: z.string(), 
+      id_estudiante: z.string() 
+    }).parse(req.params);
+    
+    const aulaId = parseInt(params.id);
+    const estudianteId = parseInt(params.id_estudiante);
+    
+    if (!Number.isInteger(aulaId) || !Number.isInteger(estudianteId)) {
+      return res.status(400).json({ ok: false, error: 'Parámetros inválidos' });
+    }
+    
+    const docenteId = req.user.docente_id;
+    
+    if (!docenteId) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: 'Acceso denegado. Solo los docentes pueden ver actividades de estudiantes.' 
+      });
+    }
+
+    const result = await obtenerActividadesEstudianteAula(aulaId, estudianteId, docenteId);
+    res.json({ 
+      ok: true, 
+      message: 'Actividades del estudiante obtenidas correctamente',
+      data: result
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

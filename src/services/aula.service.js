@@ -864,3 +864,241 @@ export async function actualizarAulaDocente(aulaId, data, docenteId) {
     throw new Error(`Error al actualizar aula: ${error.message}`);
   }
 }
+
+// Función para que docentes eliminen sus aulas
+export async function eliminarAulaDocente(aulaId, docenteId) {
+  try {
+    // Verificar que el aula existe y pertenece al docente
+    const { data: aula, error: aulaError } = await supabaseAdmin
+      .from('aula')
+      .select('id_aula, docente_id_docente')
+      .eq('id_aula', aulaId)
+      .single();
+
+    if (aulaError || !aula) {
+      throw new Error('Aula no encontrada');
+    }
+
+    // Verificar que el docente es propietario del aula
+    if (aula.docente_id_docente !== docenteId) {
+      throw new Error('No autorizado. Solo puedes eliminar tus propias aulas.');
+    }
+
+    // Verificar si tiene estudiantes asignados
+    const { count: totalEstudiantes } = await supabaseAdmin
+      .from('alumno_has_aula')
+      .select('*', { count: 'exact', head: true })
+      .eq('aula_id_aula', aulaId);
+
+    if (totalEstudiantes && totalEstudiantes > 0) {
+      throw new Error('No se puede eliminar el aula porque tiene estudiantes asignados');
+    }
+
+    // Eliminar relaciones de cuentos primero
+    const { error: cuentosError } = await supabaseAdmin
+      .from('aula_has_cuento')
+      .delete()
+      .eq('aula_id_aula', aulaId);
+
+    if (cuentosError) {
+      throw new Error(`Error al eliminar cuentos del aula: ${cuentosError.message}`);
+    }
+
+    // Eliminar el aula
+    const { error: deleteError } = await supabaseAdmin
+      .from('aula')
+      .delete()
+      .eq('id_aula', aulaId);
+
+    if (deleteError) {
+      throw new Error(`Error al eliminar aula: ${deleteError.message}`);
+    }
+
+    return {
+      aula_id: aulaId,
+      docente_id: docenteId,
+      estudiantes_eliminados: totalEstudiantes || 0
+    };
+  } catch (error) {
+    throw new Error(`Error al eliminar aula: ${error.message}`);
+  }
+}
+
+// Función para que docentes quiten estudiantes de sus aulas
+export async function quitarEstudianteAulaDocente(aulaId, estudianteId, docenteId) {
+  try {
+    // Verificar que el aula existe y pertenece al docente
+    const { data: aula, error: aulaError } = await supabaseAdmin
+      .from('aula')
+      .select('id_aula, docente_id_docente')
+      .eq('id_aula', aulaId)
+      .single();
+
+    if (aulaError || !aula) {
+      throw new Error('Aula no encontrada');
+    }
+
+    // Verificar que el docente es propietario del aula
+    if (aula.docente_id_docente !== docenteId) {
+      throw new Error('No autorizado. Solo puedes modificar tus propias aulas.');
+    }
+
+    // Verificar que el estudiante existe
+    const { data: estudiante, error: estudianteError } = await supabaseAdmin
+      .from('alumno')
+      .select('id_alumno')
+      .eq('id_alumno', estudianteId)
+      .single();
+
+    if (estudianteError || !estudiante) {
+      throw new Error('Estudiante no encontrado');
+    }
+
+    // Verificar que el estudiante está asignado al aula
+    const { data: asignacion, error: asignacionError } = await supabaseAdmin
+      .from('alumno_has_aula')
+      .select('aula_id_aula, alumno_id_alumno')
+      .eq('aula_id_aula', aulaId)
+      .eq('alumno_id_alumno', estudianteId)
+      .maybeSingle();
+
+    if (asignacionError) {
+      throw new Error(`Error al verificar asignación: ${asignacionError.message}`);
+    }
+
+    if (!asignacion) {
+      throw new Error('El estudiante no está asignado a este aula');
+    }
+
+    // Quitar al estudiante del aula
+    const { error: deleteError } = await supabaseAdmin
+      .from('alumno_has_aula')
+      .delete()
+      .eq('aula_id_aula', aulaId)
+      .eq('alumno_id_alumno', estudianteId);
+
+    if (deleteError) {
+      throw new Error(`Error al quitar estudiante del aula: ${deleteError.message}`);
+    }
+
+    return {
+      aula_id: aulaId,
+      estudiante_id: estudianteId,
+      docente_id: docenteId
+    };
+  } catch (error) {
+    throw new Error(`Error al quitar estudiante del aula: ${error.message}`);
+  }
+}
+
+// Función para obtener actividades de un estudiante específico en un aula
+export async function obtenerActividadesEstudianteAula(aulaId, estudianteId, docenteId) {
+  try {
+    // Verificar que el aula existe y pertenece al docente
+    const { data: aula, error: aulaError } = await supabaseAdmin
+      .from('aula')
+      .select('id_aula, docente_id_docente, nombre_aula')
+      .eq('id_aula', aulaId)
+      .single();
+
+    if (aulaError || !aula) {
+      throw new Error('Aula no encontrada');
+    }
+
+    // Verificar que el docente es propietario del aula
+    if (aula.docente_id_docente !== docenteId) {
+      throw new Error('No autorizado. Solo puedes ver actividades de estudiantes en tus propias aulas.');
+    }
+
+    // Verificar que el estudiante existe y está asignado al aula
+    const { data: asignacion, error: asignacionError } = await supabaseAdmin
+      .from('alumno_has_aula')
+      .select(`
+        alumno:alumno_id_alumno(
+          id_alumno,
+          usuario:usuario_id_usuario(nombre, apellido)
+        )
+      `)
+      .eq('aula_id_aula', aulaId)
+      .eq('alumno_id_alumno', estudianteId)
+      .single();
+
+    if (asignacionError || !asignacion) {
+      throw new Error('Estudiante no encontrado en este aula');
+    }
+
+    // Obtener actividades del estudiante (por ahora datos simulados)
+    const actividadesSimuladas = [
+      {
+        id: 1,
+        titulo: "Lectura de 'La Bella y la Bestia'",
+        estado: "completada",
+        fecha_asignacion: "2024-01-10T10:00:00Z",
+        fecha_completada: "2024-01-12T14:30:00Z",
+        progreso: 100,
+        tipo: "lectura",
+        cuento_id: 8
+      },
+      {
+        id: 2,
+        titulo: "Comprensión lectora - Pregunta 1",
+        estado: "completada",
+        fecha_asignacion: "2024-01-10T10:00:00Z",
+        fecha_completada: "2024-01-11T16:45:00Z",
+        progreso: 85,
+        tipo: "ejercicio",
+        cuento_id: 8
+      },
+      {
+        id: 3,
+        titulo: "Lectura de 'La Cenicienta'",
+        estado: "pendiente",
+        fecha_asignacion: "2024-01-08T09:00:00Z",
+        fecha_completada: null,
+        progreso: 0,
+        tipo: "lectura",
+        cuento_id: 12
+      },
+      {
+        id: 4,
+        titulo: "Ejercicio de vocabulario",
+        estado: "pendiente",
+        fecha_asignacion: "2024-01-05T08:00:00Z",
+        fecha_completada: null,
+        progreso: 0,
+        tipo: "ejercicio",
+        cuento_id: 12
+      }
+    ];
+
+    // Calcular estadísticas
+    const totalActividades = actividadesSimuladas.length;
+    const completadas = actividadesSimuladas.filter(a => a.estado === 'completada').length;
+    const pendientes = actividadesSimuladas.filter(a => a.estado === 'pendiente').length;
+    const progresoPromedio = actividadesSimuladas.reduce((sum, a) => sum + a.progreso, 0) / totalActividades;
+
+    // Información del estudiante
+    const estudiante = {
+      id: estudianteId,
+      nombre: `${asignacion.alumno.usuario.nombre} ${asignacion.alumno.usuario.apellido}`,
+      progreso_general: Math.round(progresoPromedio),
+      ultima_actividad: "Hace 2 horas" // Por ahora hardcodeado
+    };
+
+    // Estadísticas
+    const estadisticas = {
+      total_actividades: totalActividades,
+      completadas: completadas,
+      pendientes: pendientes,
+      progreso_promedio: Math.round(progresoPromedio * 100) / 100
+    };
+
+    return {
+      estudiante,
+      actividades: actividadesSimuladas,
+      estadisticas
+    };
+  } catch (error) {
+    throw new Error(`Error al obtener actividades del estudiante: ${error.message}`);
+  }
+}

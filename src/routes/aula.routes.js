@@ -19,7 +19,10 @@ import {
   asignarCuentosAulaDocenteController,
   listarAulasDocenteController,
   obtenerAulaDocenteController,
-  actualizarAulaDocenteController
+  actualizarAulaDocenteController,
+  eliminarAulaDocenteController,
+  quitarEstudianteAulaDocenteController,
+  obtenerActividadesEstudianteAulaController
 } from '../controllers/aula.controller.js';
 import { agregarCuentoAulaDocenteController, quitarCuentoAulaDocenteController } from '../controllers/aula.controller.js';
 import { obtenerActividadesDeAulaController } from '../controllers/actividad.controller.js';
@@ -37,10 +40,15 @@ router.post('/docente', requireAuth, requireRole('docente'), crearAulaDocenteCon
 router.get('/docente', requireAuth, requireRole('docente'), listarAulasDocenteController);
 router.get('/docente/:id', requireAuth, requireRole('docente'), obtenerAulaDocenteController);
 router.put('/docente/:id', requireAuth, requireRole('docente'), actualizarAulaDocenteController);
+router.delete('/docente/:id', requireAuth, requireRole('docente'), eliminarAulaDocenteController);
 router.put('/docente/:id/cuentos', requireAuth, requireRole('docente'), asignarCuentosAulaDocenteController);
 // Incrementales: agregar/quitar cuento puntual
 router.post('/docente/:id/cuentos', requireAuth, requireRole('docente'), agregarCuentoAulaDocenteController);
 router.delete('/docente/:id/cuentos/:id_cuento', requireAuth, requireRole('docente'), quitarCuentoAulaDocenteController);
+// Quitar estudiante del aula
+router.delete('/docente/:id/estudiantes/:id_estudiante', requireAuth, requireRole('docente'), quitarEstudianteAulaDocenteController);
+// Obtener actividades de un estudiante específico
+router.get('/docente/:id/estudiantes/:id_estudiante/actividades', requireAuth, requireRole('docente'), obtenerActividadesEstudianteAulaController);
 
 // Rutas protegidas para administradores
 router.post('/', requireAuth, requireRole('administrador'), crearAulaController);
