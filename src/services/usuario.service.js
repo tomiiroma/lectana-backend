@@ -10,7 +10,9 @@ export async function crearUsuario({ nombre, apellido, email, edad, password }) 
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    throw new Error(error.message);
+  }
 
   const { password: _omit, ...usuarioSinPassword } = data || {};
   return usuarioSinPassword;
