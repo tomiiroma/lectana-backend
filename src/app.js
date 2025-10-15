@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 
 import healthRouter from './routes/health.routes.js';
@@ -83,14 +83,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   // Configurar keyGenerator para usar IP real detrás del proxy
-  keyGenerator: (req) => {
-    // En producción (Render), usar X-Forwarded-For para obtener IP real
-    if (process.env.NODE_ENV === 'production') {
-      return req.ip || req.connection.remoteAddress;
-    }
-    // En desarrollo, usar IP normal
-    return req.ip;
-  },
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
   skip: (req) => {
     // Saltar rate limiting en desarrollo para localhost
     return process.env.NODE_ENV !== 'production' && 
