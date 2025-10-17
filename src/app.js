@@ -24,6 +24,7 @@ import preguntaActividadRouter from './routes/pregunta_actividad.routes.js';
 import respuestaActividadRouter from './routes/respuesta_actividad.routes.js';
 import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 import puntosRoutes from './routes/puntos.routes.js';
+import ttsRoutes from './routes/tts.routes.js';
 
 
 
@@ -119,6 +120,8 @@ app.use('/api/preguntas', preguntaActividadRouter);
 app.use('/api/respuestas', respuestaActividadRouter);
 app.use('/api/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/api/puntos', puntosRoutes);
+app.use('/api/tts', ttsRoutes);
+
 
 
 
