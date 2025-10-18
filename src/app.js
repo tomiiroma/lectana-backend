@@ -126,6 +126,7 @@ app.use('/api/usuarios', usuarioRouter);
 app.use('/api/docentes', docenteRouter);
 app.use('/api/administrador', administradorRouter);
 app.use('/api/auth', authRouter);
+app.use('/auth', authRouter); // Ruta adicional para compatibilidad
 app.use('/api/alumnos', alumnoRouter);
 app.use('/api/autores', autorRouter);
 app.use('/api/generos', generoRouter);
