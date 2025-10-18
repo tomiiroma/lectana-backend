@@ -12,7 +12,9 @@ export async function loginController(req, res, next) {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost', // ← AGREGAR ESTO
     })
     
     res.json({
