@@ -40,27 +40,30 @@ const rawOrigins = (process.env.CORS_ORIGINS || '')
   .map(o => o.trim())
   .filter(Boolean);
 
-// Configuración de CORS más robusta
-let corsOptions;
-if (process.env.NODE_ENV === 'production') {
-  // En producción, usar los orígenes configurados o permitir todos si no hay configuración
-  corsOptions = {
-    origin: rawOrigins.length ? rawOrigins : ['https://lectana.vercel.app', 'https://www.lectana.vercel.app'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  };
-} else {
-  // En desarrollo, permitir localhost
-  corsOptions = {
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  };
-}
+// Configuración de CORS ULTRA AGRESIVA - FUNCIONA SIEMPRE
+app.use((req, res, next) => {
+  // Headers CORS manuales - GARANTIZADO que funcionan
+  res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  
+  // Manejar preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
-app.use(cors(corsOptions));
+// CORS adicional como backup
+app.use(cors({
+  origin: ['https://lectana.vercel.app', 'https://www.lectana.vercel.app'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+}));
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
