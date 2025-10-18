@@ -39,10 +39,28 @@ const rawOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
-app.use(cors({
-  origin: rawOrigins.length ? rawOrigins : (process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : false),
-  credentials: true,
-}));
+
+// Configuración de CORS más robusta
+let corsOptions;
+if (process.env.NODE_ENV === 'production') {
+  // En producción, usar los orígenes configurados o permitir todos si no hay configuración
+  corsOptions = {
+    origin: rawOrigins.length ? rawOrigins : ['https://lectana.vercel.app', 'https://www.lectana.vercel.app'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  };
+} else {
+  // En desarrollo, permitir localhost
+  corsOptions = {
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  };
+}
+
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json({ limit: '10mb' })); // Límite de tamaño para evitar memory leaks
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
