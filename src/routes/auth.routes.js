@@ -19,6 +19,16 @@ router.use((req, res, next) => {
 
 router.post('/login', loginController);
 router.post('/logout', logoutController)
+router.post('/verify', requireAuth, (req, res) => {
+  res.json({
+    ok: true,
+    usuario: {
+      id_usuario: req.user.sub,
+      role: req.user.role,
+      verificado: req.user.verificado,
+    }
+  });
+});
 router.post('/registro-form-alumno', registerAlumnoController);
 router.post('/registro-form-docente', registerDocenteController);
 router.post('/admin-registro-administrador', requireAuth, requireRole('administrador'), registerAdministradorController);

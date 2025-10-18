@@ -40,7 +40,7 @@ const rawOrigins = (process.env.CORS_ORIGINS || '')
   .map(o => o.trim())
   .filter(Boolean);
 app.use(cors({
-  origin: rawOrigins.length ? rawOrigins : (process.env.NODE_ENV !== 'production' ? true : false),
+  origin: rawOrigins.length ? rawOrigins : (process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : false),
   credentials: true,
 }));
 app.use(helmet());
