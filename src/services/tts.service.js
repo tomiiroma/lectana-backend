@@ -1,4 +1,8 @@
-import { ttsClient } from '../config/google-cloud.js';
+//import { ttsClient } from '../config/google-cloud.js';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 /**
  * Genera audio a partir de texto usando Google Cloud TTS
@@ -73,4 +77,24 @@ export function calcularDuracionEstimada(texto, velocidad = 1.0) {
   const minutos = palabras / palabrasPorMinuto;
   return Math.ceil(minutos * 60); // Convertir a segundos
 }
+
+
+
+const elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
+
+export async function generarAudioElevenLabs(texto, voiceId = 'JBFqnCBsd6RMkjVDRZzb') {
+  const audioStream = await elevenlabs.textToSpeech.convert(voiceId, {
+    text: texto,
+    modelId: 'eleven_multilingual_v2',
+    outputFormat: 'mp3_44100_128',
+  });
+
+  // Convertir el stream a buffer
+  const chunks = [];
+  for await (const chunk of audioStream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 

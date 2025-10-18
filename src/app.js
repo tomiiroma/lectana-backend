@@ -24,8 +24,8 @@ import preguntaActividadRouter from './routes/pregunta_actividad.routes.js';
 import respuestaActividadRouter from './routes/respuesta_actividad.routes.js';
 import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 import puntosRoutes from './routes/puntos.routes.js';
-import audioRouter from './routes/audio.routes.js';
-
+//import audioRouter from './routes/audio.routes.js';
+import audioRouter from './routes/tts.routes.js'
 
 
 const app = express();
