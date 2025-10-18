@@ -40,9 +40,9 @@ const rawOrigins = (process.env.CORS_ORIGINS || '')
   .map(o => o.trim())
   .filter(Boolean);
 
-// Configuración de CORS ULTRA AGRESIVA - FUNCIONA SIEMPRE
+// CORS NUCLEAR - HEADERS EN CADA RESPUESTA
 app.use((req, res, next) => {
-  // Headers CORS manuales - GARANTIZADO que funcionan
+  // Headers CORS en CADA respuesta
   res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
@@ -54,6 +54,17 @@ app.use((req, res, next) => {
     return;
   }
   
+  next();
+});
+
+// Middleware adicional para asegurar CORS en TODAS las respuestas
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  res.send = function(data) {
+    res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    originalSend.call(this, data);
+  };
   next();
 });
 
@@ -132,6 +143,17 @@ app.set('authLimiter', authLimiter);
 
 // Rutas
 app.use('/health', healthRouter);
+
+// Endpoint de prueba CORS
+app.get('/cors-test', (req, res) => {
+  res.json({ 
+    ok: true, 
+    message: 'CORS funcionando correctamente',
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin
+  });
+});
+
 if (process.env.NODE_ENV !== 'production') {
   app.use('/test', testRouter);
 }
