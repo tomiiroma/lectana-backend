@@ -157,11 +157,11 @@ app.get('/cors-test', (req, res) => {
 if (process.env.NODE_ENV !== 'production') {
   app.use('/test', testRouter);
 }
+// Rutas con prefijo /api/
 app.use('/api/usuarios', usuarioRouter);
 app.use('/api/docentes', docenteRouter);
 app.use('/api/administrador', administradorRouter);
 app.use('/api/auth', authRouter);
-app.use('/auth', authRouter); // Ruta adicional para compatibilidad
 app.use('/api/alumnos', alumnoRouter);
 app.use('/api/autores', autorRouter);
 app.use('/api/generos', generoRouter);
@@ -175,6 +175,24 @@ app.use('/api/respuestas', respuestaActividadRouter);
 app.use('/api/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/api/puntos', puntosRoutes);
 app.use('/api/audio', audioRouter);
+
+// Rutas SIN prefijo /api/ para compatibilidad con frontend
+app.use('/auth', authRouter);
+app.use('/usuarios', usuarioRouter);
+app.use('/docentes', docenteRouter);
+app.use('/administrador', administradorRouter);
+app.use('/alumnos', alumnoRouter);
+app.use('/autores', autorRouter);
+app.use('/generos', generoRouter);
+app.use('/cuentos', cuentoRouter);
+app.use('/imagenes', imagenRouter);
+app.use('/aulas', aulaRouter);
+app.use('/actividades', actividadRouter);
+app.use('/preguntas', preguntaActividadRouter);
+app.use('/respuestas', respuestaActividadRouter);
+app.use('/respuestas-usuario', respuestaUsuarioRouter);
+app.use('/puntos', puntosRoutes);
+app.use('/audio', audioRouter);
 
 
 
