@@ -7,13 +7,14 @@ let credentials = null;
 let projectId = 'lectana-tts';
 
 // Intentar cargar desde variables de entorno primero
-if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON && process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON.trim()) {
   try {
     credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
     projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || credentials.project_id;
     console.log('✅ Credenciales de Google Cloud cargadas desde variables de entorno');
   } catch (error) {
     console.error('❌ Error al parsear credenciales de variables de entorno:', error.message);
+    console.log('🔄 Continuando con carga desde archivo...');
   }
 }
 

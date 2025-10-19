@@ -78,8 +78,6 @@ export function calcularDuracionEstimada(texto, velocidad = 1.0) {
   return Math.ceil(minutos * 60); // Convertir a segundos
 }
 
-
-
 const elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
 
 export async function generarAudioElevenLabs(texto, voiceId = 'JBFqnCBsd6RMkjVDRZzb') {
@@ -96,5 +94,3 @@ export async function generarAudioElevenLabs(texto, voiceId = 'JBFqnCBsd6RMkjVDR
   }
   return Buffer.concat(chunks);
 }
-
-

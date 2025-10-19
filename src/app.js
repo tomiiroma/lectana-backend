@@ -39,11 +39,53 @@ const rawOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
+
+// CORS NUCLEAR - HEADERS EN CADA RESPUESTA
+app.use((req, res, next) => {
+  // Headers CORS en CADA respuesta
+  res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  
+  // Manejar preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
+
+// Middleware adicional para asegurar CORS en TODAS las respuestas
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  res.send = function(data) {
+    res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    originalSend.call(this, data);
+  };
+  next();
+});
+
+// CORS adicional como backup
 app.use(cors({
-  origin: rawOrigins.length ? rawOrigins : (process.env.NODE_ENV !== 'production' ? ['http://localhost:5173', 'http://localhost:3000'] : false),
+  origin: ['https://lectana.vercel.app', 'https://www.lectana.vercel.app'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
-app.use(helmet());
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
 app.use(express.json({ limit: '10mb' })); // Límite de tamaño para evitar memory leaks
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -101,9 +143,21 @@ app.set('authLimiter', authLimiter);
 
 // Rutas
 app.use('/health', healthRouter);
+
+// Endpoint de prueba CORS
+app.get('/cors-test', (req, res) => {
+  res.json({ 
+    ok: true, 
+    message: 'CORS funcionando correctamente',
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin
+  });
+});
+
 if (process.env.NODE_ENV !== 'production') {
   app.use('/test', testRouter);
 }
+// Rutas con prefijo /api/
 app.use('/api/usuarios', usuarioRouter);
 app.use('/api/docentes', docenteRouter);
 app.use('/api/administrador', administradorRouter);
@@ -121,6 +175,24 @@ app.use('/api/respuestas', respuestaActividadRouter);
 app.use('/api/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/api/puntos', puntosRoutes);
 app.use('/api/audio', audioRouter);
+
+// Rutas SIN prefijo /api/ para compatibilidad con frontend
+app.use('/auth', authRouter);
+app.use('/usuarios', usuarioRouter);
+app.use('/docentes', docenteRouter);
+app.use('/administrador', administradorRouter);
+app.use('/alumnos', alumnoRouter);
+app.use('/autores', autorRouter);
+app.use('/generos', generoRouter);
+app.use('/cuentos', cuentoRouter);
+app.use('/imagenes', imagenRouter);
+app.use('/aulas', aulaRouter);
+app.use('/actividades', actividadRouter);
+app.use('/preguntas', preguntaActividadRouter);
+app.use('/respuestas', respuestaActividadRouter);
+app.use('/respuestas-usuario', respuestaUsuarioRouter);
+app.use('/puntos', puntosRoutes);
+app.use('/audio', audioRouter);
 
 
 

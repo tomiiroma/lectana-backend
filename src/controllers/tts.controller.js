@@ -4,10 +4,8 @@ import path from 'path';
 import pdfParse from 'pdf-parse';
 import { generarAudio, generarAudioElevenLabs } from '../services/tts.service.js';
 
-
 const tempDir = path.join(process.cwd(), 'temp_audios');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-
 
 export async function generarAudioController(req, res) {
   try {
@@ -29,6 +27,7 @@ export async function generarAudioController(req, res) {
     res.status(500).json({ error: 'Error generando el audio.' });
   }
 }
+
 export async function pdfToAudioController(req, res) {
   try {
     const { pdfUrl, voiceId } = req.body;
