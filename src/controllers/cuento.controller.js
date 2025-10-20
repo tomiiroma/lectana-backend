@@ -34,6 +34,19 @@ export async function crearCuentoController(req, res, next) {
   }
 }
 
+export async function crearCuentoPlanoController(req, res, next) {
+  try {
+    const data = crearCuentoSchema.parse(req.body);
+    const result = await crearCuento(data);
+    res.status(201).json({ ok: true, data: result });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+    }
+    next(error);
+  }
+}
+
 export async function obtenerCuentoController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);

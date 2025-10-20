@@ -24,8 +24,9 @@ import preguntaActividadRouter from './routes/pregunta_actividad.routes.js';
 import respuestaActividadRouter from './routes/respuesta_actividad.routes.js';
 import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 import puntosRoutes from './routes/puntos.routes.js';
-//import audioRouter from './routes/audio.routes.js';
-import audioRouter from './routes/tts.routes.js'
+import audioRouter from './routes/audio.routes.js';
+import actividadDocenteRouter from './routes/actividad-docente.routes.js';
+
 
 
 const app = express();
@@ -175,6 +176,7 @@ app.use('/api/respuestas', respuestaActividadRouter);
 app.use('/api/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/api/puntos', puntosRoutes);
 app.use('/api/audio', audioRouter);
+app.use('/api/docentes/actividades', actividadDocenteRouter);
 
 // Rutas SIN prefijo /api/ para compatibilidad con frontend
 app.use('/auth', authRouter);
@@ -193,6 +195,7 @@ app.use('/respuestas', respuestaActividadRouter);
 app.use('/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/puntos', puntosRoutes);
 app.use('/audio', audioRouter);
+app.use('/docentes/actividades', actividadDocenteRouter);
 
 
 

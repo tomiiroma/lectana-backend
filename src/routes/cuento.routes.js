@@ -6,7 +6,8 @@ import {
   actualizarCuentoController, 
   estadisticasCuentosController,
   listarCuentosPublicosController,
-  obtenerCuentoPublicoController
+  obtenerCuentoPublicoController,
+  crearCuentoPlanoController
 } from '../controllers/cuento.controller.js';
 import { subirPDFController } from '../controllers/archivo.controller.js';
 import { subirImagenCuentoController } from '../controllers/imagen.controller.js';
@@ -31,6 +32,7 @@ router.use((req, res, next) => {
 
 // Rutas protegidas (requieren autenticación de administrador)
 router.post('/', requireAuth, requireRole('administrador'), crearCuentoController);
+router.post('/plano', requireAuth, requireRole('administrador'), crearCuentoPlanoController);
 router.get('/', requireAuth, requireRole('administrador'), listarCuentosController);
 router.get('/estadisticas/total', requireAuth, requireRole('administrador'), estadisticasCuentosController);
 router.get('/:id', requireAuth, requireRole('administrador'), obtenerCuentoController);
