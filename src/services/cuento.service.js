@@ -145,6 +145,9 @@ export async function listarCuentosPublicos(filtros = {}) {
       edad_publico,
       url_img,
       duracion,
+      audio_url,
+      audio_duration,
+      audio_status,
       autor:autor_id_autor(nombre, apellido),
       genero:genero_id_genero(nombre)
     `, { count: 'exact' });
@@ -199,6 +202,9 @@ export async function obtenerCuentoPublicoPorId(id) {
       url_img,
       duracion,
       pdf_url,
+      audio_url,
+      audio_duration,
+      audio_status,
       autor:autor_id_autor(nombre, apellido),
       genero:genero_id_genero(nombre)
     `)
