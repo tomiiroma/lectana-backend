@@ -38,3 +38,4 @@ console.log('🚀 Después de actualizar, prueba el login con:');
 console.log('   Email: docentetomas@docente.com');
 console.log('   Contraseña: 12345678');
 
+

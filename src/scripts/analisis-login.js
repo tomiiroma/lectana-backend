@@ -69,3 +69,4 @@ console.log('4. Verificar que el usuario tenga rol de docente asignado\n');
 console.log('📞 Próximo paso:');
 console.log('Revisa el Supabase Dashboard para ver el estado real del usuario');
 
+

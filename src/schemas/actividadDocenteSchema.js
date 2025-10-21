@@ -84,3 +84,4 @@ export const agregarPreguntasActividadSchema = z.object({
   })).min(1, 'Debe enviar al menos una pregunta')
 });
 
+
