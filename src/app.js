@@ -35,46 +35,54 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(cookieParser())
-// Middlewares
-const rawOrigins = (process.env.CORS_ORIGINS || '')
+// Configuración CORS flexible para local y producción
+const allowedOrigins = [
+  'https://lectana.vercel.app',
+  'https://www.lectana.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://localhost:5173', // Vite dev server
+  'http://127.0.0.1:5173'
+];
+
+// Agregar orígenes adicionales desde variables de entorno
+const envOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
 
-// CORS NUCLEAR - HEADERS EN CADA RESPUESTA
-app.use((req, res, next) => {
-  // Headers CORS en CADA respuesta
-  res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
-  
-  // Manejar preflight requests
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  
-  next();
-});
+allowedOrigins.push(...envOrigins);
 
-// Middleware adicional para asegurar CORS en TODAS las respuestas
-app.use((req, res, next) => {
-  const originalSend = res.send;
-  res.send = function(data) {
-    res.header('Access-Control-Allow-Origin', 'https://lectana.vercel.app');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    originalSend.call(this, data);
-  };
-  next();
-});
-
-// CORS adicional como backup
+// Configuración CORS principal
 app.use(cors({
-  origin: ['https://lectana.vercel.app', 'https://www.lectana.vercel.app'],
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Verificar si el origin está en la lista permitida
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // En desarrollo, permitir cualquier localhost
+    if (process.env.NODE_ENV !== 'production' && origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    // En desarrollo, permitir cualquier 127.0.0.1
+    if (process.env.NODE_ENV !== 'production' && origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+    
+    console.log('🚫 CORS bloqueado para origin:', origin);
+    callback(new Error('No permitido por CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
 }));
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
@@ -145,14 +153,23 @@ app.set('authLimiter', authLimiter);
 // Rutas
 app.use('/health', healthRouter);
 
-// Endpoint de prueba CORS
+// Endpoint de prueba CORS mejorado
 app.get('/cors-test', (req, res) => {
   res.json({ 
     ok: true, 
     message: 'CORS funcionando correctamente',
     timestamp: new Date().toISOString(),
-    origin: req.headers.origin
+    origin: req.headers.origin,
+    environment: process.env.NODE_ENV || 'development',
+    allowedOrigins: allowedOrigins,
+    userAgent: req.headers['user-agent'],
+    ip: req.ip
   });
+});
+
+// Endpoint OPTIONS para preflight
+app.options('/cors-test', (req, res) => {
+  res.status(200).end();
 });
 
 if (process.env.NODE_ENV !== 'production') {
