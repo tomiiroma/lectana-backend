@@ -80,7 +80,7 @@ export function calcularDuracionEstimada(texto, velocidad = 1.0) {
 
 const elevenlabs = new ElevenLabsClient({ apiKey: process.env.ELEVENLABS_API_KEY });
 
-export async function generarAudioElevenLabs(texto, voiceId = 'JBFqnCBsd6RMkjVDRZzb') {
+export async function generarAudioElevenLabs(texto, voiceId = 'AvFwmpNEfWWu5mtNDqhH') {
   const audioStream = await elevenlabs.textToSpeech.convert(voiceId, {
     text: texto,
     modelId: 'eleven_multilingual_v2',
