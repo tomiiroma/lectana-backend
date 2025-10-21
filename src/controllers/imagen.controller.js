@@ -11,6 +11,10 @@ import {
 
 import { subirImagenSchema } from '../schemas/imagenSchema.js';
 
+const idSchema = z.object({
+  id: z.string().transform(val => parseInt(val)).pipe(z.number().int().positive()),
+});
+
 
 export async function subirImagenController(req, res, next) {
   try {
@@ -60,6 +64,8 @@ export async function subirImagenController(req, res, next) {
 
 export async function subirImagenCuentoController(req, res, next) {
   try {
+    const { id } = idSchema.parse(req.params);
+    
     if (!req.file) {
       return res.status(400).json({ ok: false, error: 'No se proporcionó ningún archivo' });
     }
@@ -72,9 +78,16 @@ export async function subirImagenCuentoController(req, res, next) {
       return res.status(400).json({ ok: false, error: 'El archivo es demasiado grande. Máximo 10MB' });
     }
 
-    const resultado = await subirImagenCuento(req.file);
+    const resultado = await subirImagenYAsociarCuento(id, req.file);
     res.status(201).json({ ok: true, data: resultado, message: 'Imagen subida exitosamente' });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Validación fallida', 
+        detalles: error.flatten() 
+      });
+    }
     next(error);
   }
 }
