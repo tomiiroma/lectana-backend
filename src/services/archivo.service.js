@@ -100,3 +100,46 @@ export async function listarArchivosCuentos() {
     throw new Error(`Error en listado: ${error.message}`);
   }
 }
+
+export async function subirAudio(cuentoId, archivoBuffer, nombreArchivo) {
+  const filePath = `audios/${nombreArchivo}`; // ruta en el bucket
+
+  try {
+    // 1️⃣ Subir archivo MP3 al bucket 'cuentos-audio'
+    const { data, error } = await supabaseAdmin.storage
+      .from('cuentos-audio')
+      .upload(filePath, archivoBuffer, {
+        contentType: 'audio/mpeg',
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) {
+      throw new Error(`Error al subir audio: ${error.message}`);
+    }
+
+    // 2️⃣ Obtener URL pública del audio
+    const { data: urlData } = supabaseAdmin.storage
+      .from('cuentos-audio')
+      .getPublicUrl(filePath);
+
+    // 3️⃣ Actualizar la tabla 'cuento' con la URL del audio
+    const { error: updateError } = await supabaseAdmin
+      .from('cuento')
+      .update({ audio_url: urlData.publicUrl })
+      .eq('id_cuento', cuentoId);
+
+    if (updateError) {
+      throw new Error(`Error al actualizar cuento: ${updateError.message}`);
+    }
+
+    // 4️⃣ Retornar información útil
+    return {
+      path: filePath,
+      url: urlData.publicUrl,
+      size: archivoBuffer.length
+    };
+  } catch (error) {
+    throw new Error(`Error en subida de audio: ${error.message}`);
+  }
+}

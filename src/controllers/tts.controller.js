@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import pdfParse from 'pdf-parse';
 import { generarAudio, generarAudioElevenLabs } from '../services/tts.service.js';
+import { subirAudio } from '../services/archivo.service.js';
 
 const tempDir = path.join(process.cwd(), 'temp_audios');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
@@ -30,8 +31,10 @@ export async function generarAudioController(req, res) {
 
 export async function pdfToAudioController(req, res) {
   try {
-    const { pdfUrl, voiceId } = req.body;
+    const { pdfUrl, voiceId, cuentoId } = req.body;
+
     if (!pdfUrl) return res.status(400).json({ error: 'El campo "pdfUrl" es obligatorio.' });
+    if (!cuentoId) return res.status(400).json({ error: 'El campo "cuentoId" es obligatorio.' });
 
     // 1️⃣ Descargar PDF
     const response = await fetch(pdfUrl);
@@ -39,15 +42,11 @@ export async function pdfToAudioController(req, res) {
     const arrayBuffer = await response.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
 
-    // 2️⃣ Extraer texto
+    // 2️⃣ Extraer texto del PDF
     const pdfData = await pdfParse(pdfBuffer);
     const textoCompleto = pdfData.text;
 
-    if (!textoCompleto || textoCompleto.trim() === '') {
-        return res.status(400).json({ error: 'El PDF no contiene texto.' });
-    }
-
-    // 3️⃣ Dividir texto en fragmentos
+    // 3️⃣ Dividir texto en fragmentos de 1500 palabras
     const palabras = textoCompleto.split(/\s+/);
     const maxPalabras = 1500;
     const fragmentos = [];
@@ -55,20 +54,25 @@ export async function pdfToAudioController(req, res) {
       fragmentos.push(palabras.slice(i, i + maxPalabras).join(' '));
     }
 
-    // 4️⃣ Generar MP3 por cada fragmento y guardar
-    const urls = [];
-    let contador = 1;
+    // 4️⃣ Generar audios para cada fragmento y concatenarlos
+    const buffers = [];
     for (const fragmento of fragmentos) {
       const audioBuffer = await generarAudioElevenLabs(fragmento, voiceId);
-      const filename = `voz_${Date.now()}_${contador}.mp3`;
-      const filepath = path.join(tempDir, filename);
-      fs.writeFileSync(filepath, audioBuffer);
-      urls.push(`http://localhost:3000/temp_audios/${filename}`); // URL accesible para Android
-      contador++;
+      buffers.push(audioBuffer);
     }
 
-    // 5️⃣ Devolver URLs a Android
-    res.json({ audios: urls });
+    // 5️⃣ Combinar todos los buffers en uno solo
+    const audioFinal = Buffer.concat(buffers);
+
+    // 6️⃣ Subir el audio final a Supabase
+    const nombreArchivo = `cuento_${cuentoId}_completo_${Date.now()}.mp3`;
+    const subida = await subirAudio(cuentoId, audioFinal, nombreArchivo);
+
+    // 7️⃣ Responder al cliente con la URL final
+    res.json({
+      message: '✅ Audio completo generado y subido correctamente',
+      audioUrl: subida.url,
+    });
 
   } catch (error) {
     console.error('❌ Error procesando PDF a audio:', error);

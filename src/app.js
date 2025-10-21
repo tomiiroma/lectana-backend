@@ -26,7 +26,7 @@ import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 import puntosRoutes from './routes/puntos.routes.js';
 import audioRouter from './routes/audio.routes.js';
 import actividadDocenteRouter from './routes/actividad-docente.routes.js';
-
+import elevenLabs from './routes/tts.routes.js'
 
 
 const app = express();
@@ -71,7 +71,7 @@ app.use((req, res, next) => {
 
 // CORS adicional como backup
 app.use(cors({
-  origin: ['https://lectana.vercel.app', 'https://www.lectana.vercel.app'],
+  origin: ['https://lectana.vercel.app', 'https://www.lectana.vercel.app', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
@@ -195,6 +195,8 @@ app.use('/respuestas', respuestaActividadRouter);
 app.use('/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/puntos', puntosRoutes);
 app.use('/audio', audioRouter);
+app.use('/audioElevenLabs', elevenLabs);
+
 app.use('/docentes/actividades', actividadDocenteRouter);
 
 
