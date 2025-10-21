@@ -3,11 +3,11 @@ import { z } from 'zod';
 
 export const crearCuentoSchema = z.object({
   titulo: z.string().min(1),
-  edad_publico: z.number().int().min(4).max(18),
+  edad_publico: z.coerce.number().int().min(4).max(18),
   url_img: z.string().url().optional(),
-  duracion: z.number().int().positive().optional(),
-  autor_id_autor: z.number().int().positive(),
-  genero_id_genero: z.number().int().positive(),
+  duracion: z.coerce.number().int().positive().optional(),
+  autor_id_autor: z.coerce.number().int().positive(),
+  genero_id_genero: z.coerce.number().int().positive(),
   pdf_url: z.string().url().optional(),
 });
 
