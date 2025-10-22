@@ -39,6 +39,7 @@ export async function listarCuentos(filtros = {}) {
       id_cuento,
       titulo,
       edad_publico,
+      pdf_url,
       autor:autor_id_autor(nombre, apellido),
       genero:genero_id_genero(nombre)
     `);
