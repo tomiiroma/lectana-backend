@@ -8,21 +8,100 @@ import {
   verificarLogros,
   obtenerLogrosAlumno
 } from '../services/logro.service.js';
-
+import { supabaseAdmin } from '../config/supabase.js';
 import { crearLogroSchema, actualizarLogroSchema, idSchema } from '../schemas/logroSchema.js';
+
+async function subirImagenASupabase(file) {
+  try {
+    const nombreArchivo = `logro_${Date.now()}_${file.originalname}`;
+    
+    const { data, error } = await supabaseAdmin.storage
+      .from('logros')
+      .upload(nombreArchivo, file.buffer, {
+        contentType: file.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+    
+    if (error) {
+      console.error('Error subiendo imagen a Supabase:', error);
+      throw new Error(`Error al subir imagen: ${error.message}`);
+    }
+    
+
+    const { data: urlData } = supabaseAdmin.storage
+      .from('logros')
+      .getPublicUrl(nombreArchivo);
+    
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Error en subirImagenASupabase:', error);
+    throw error;
+  }
+}
 
 export async function crearLogroController(req, res, next) {
   try {
-    const data = crearLogroSchema.parse(req.body);
-    const result = await crearLogro(data);
-    res.status(201).json({ ok: true, data: result });
+
+   
+    if (!req.file) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'La imagen es obligatoria para crear un logro' 
+      });
+    }
+
+    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!tiposPermitidos.includes(req.file.mimetype)) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Solo se aceptan imágenes JPG, PNG, GIF o WebP' 
+      });
+    }
+
+   
+    if (req.file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'La imagen es demasiado grande. Máximo 5MB' 
+      });
+    }
+
+    
+    const dataValidada = crearLogroSchema.parse(req.body);
+  
+    const urlImagen = await subirImagenASupabase(req.file);
+  
+    
+    const result = await crearLogro({
+      ...dataValidada,
+      url_imagen: urlImagen
+    });
+    
+    console.log('✅ Logro creado exitosamente:', result);
+    
+    res.status(201).json({ 
+      ok: true, 
+      data: result,
+      message: 'Logro creado exitosamente con imagen' 
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+      console.error(' Error de validación:', error.errors);
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Validación fallida', 
+        detalles: error.errors
+      });
     }
-    next(error);
+    console.error(' Error en crearLogroController:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message || 'Error interno del servidor'
+    });
   }
 }
+
 
 export async function obtenerLogroController(req, res, next) {
   try {

@@ -26,6 +26,7 @@ import respuestaUsuarioRouter from './routes/respuesta_usuario.routes.js';
 import puntosRoutes from './routes/puntos.routes.js';
 import audioRouter from './routes/audio.routes.js';
 import actividadDocenteRouter from './routes/actividad-docente.routes.js';
+import logroRouter from './routes/logro.routes.js';
 import elevenLabs from './routes/tts.routes.js'
 
 
@@ -194,6 +195,7 @@ app.use('/api/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/api/puntos', puntosRoutes);
 app.use('/api/audio', audioRouter);
 app.use('/api/docentes/actividades', actividadDocenteRouter);
+app.use('/api/logros', logroRouter);
 
 // Rutas SIN prefijo /api/ para compatibilidad con frontend
 app.use('/auth', authRouter);
@@ -213,6 +215,7 @@ app.use('/respuestas-usuario', respuestaUsuarioRouter);
 app.use('/puntos', puntosRoutes);
 app.use('/audio', audioRouter);
 app.use('/audioElevenLabs', elevenLabs);
+app.use('/logros', logroRouter);
 
 app.use('/docentes/actividades', actividadDocenteRouter);
 
