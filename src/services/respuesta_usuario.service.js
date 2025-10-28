@@ -174,3 +174,25 @@ export async function obtenerEstadisticasActividad(actividad_id_actividad) {
     respuestas: data
   };
 }
+
+//NUEVAS FUNCIONES
+
+export async function crearRespuestaAbierta(respuesta_texto, id_pregunta){
+
+  if(!respuesta_texto, !id_pregunta){
+    console.log("Faltan datos")
+  }
+
+  const {data, error} = await supabaseAdmin
+  .from('respuesta_usuario')
+  .insert({respuesta_texto: respuesta_texto, pregunta_actividad_id_pregunta_actividad: id_pregunta})
+  .select()
+
+   if(error){
+      throw new Error("Error al crear respuesta")
+      console.log("Error", error.message)
+    }
+
+    return data;
+
+}

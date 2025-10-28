@@ -8,7 +8,8 @@ import {
   eliminarPreguntaActividad,
   eliminarPreguntasActividad,
   agregarPreguntaAActividad,
-  actualizarPreguntaCompleta
+  actualizarPreguntaCompleta,
+  crearPreguntaParaActividad
 } from '../services/pregunta_actividad.service.js';
 
 import { crearPreguntaSchema, idSchema, crearPreguntasSchema, actualizarPreguntaSchema, agregarPreguntaSchema, actualizarPreguntaCompletaSchema } from '../schemas/preguntaActividadSchema.js';
@@ -227,4 +228,19 @@ export async function actualizarPreguntaCompletaController(req, res, next) {
     }
     next(error);
   }
+}
+
+
+export async function crearPreguntaParaActividadController(req, res){
+    
+  try{
+  const {id_actividad} = req.params;
+    const { enunciado } = req.body;
+
+    const preguntaActividad = await crearPreguntaParaActividad(id_actividad, enunciado);
+    res.status(200).json({preguntaActividad})
+  }catch(error){
+    console.log("Error: ", error.message)
+  }
+
 }

@@ -10,7 +10,8 @@ import {
   asignarActividadAAulas,
   obtenerAulasDeActividad,
   removerActividadDeAula,
-  obtenerActividadesDeAula
+  obtenerActividadesDeAula,
+  crearActividad
 } from '../services/actividad.service.js';
 import { idSchema } from '../schemas/idSchema.js';
 import { asignarAulasSchema , actualizarActividadCompletaSchema ,crearActividadCompletaSchema, actualizarActividadCompletaConPreguntasSchema, crearActividadConCuentoSchema } from '../schemas/actividadSchema,.js';
@@ -277,3 +278,14 @@ export async function obtenerActividadesDeAulaController(req, res, next) {
     next(error);
   }
 }
+
+  export async function crearActividadController(req, res){
+    try{
+      const {fecha_entrega,tipo, descripcion,id_cuento} = req.body;
+      const id_docente = req.user.sub;
+      const actividad = await crearActividad(fecha_entrega,tipo, descripcion , id_cuento , id_docente);
+      res.status(200).json({actividad});
+    }catch(error){
+      console.log("Error: ", error.message);
+    }
+  }

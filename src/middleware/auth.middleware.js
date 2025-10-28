@@ -65,7 +65,7 @@ export function requireAuth(req, res, next) {
   }
 }
 
-export function requireRole(allowedRoles) {
+export function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ ok: false, error: 'Autenticación requerida' });

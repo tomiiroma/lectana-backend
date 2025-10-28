@@ -6,7 +6,8 @@ import {
   obtenerRespuestaPorId,
   actualizarRespuestaActividad,
   eliminarRespuestaActividad,
-  eliminarRespuestasActividad
+  eliminarRespuestasActividad,
+  crearRespuestaParaActividad
 } from '../services/respuesta_actividad.service.js';
 
 import { crearRespuestaSchema, idSchema, crearRespuestasSchema, actualizarRespuestaSchema } from '../schemas/respuestaActividadSchema.js';
@@ -171,4 +172,21 @@ export async function eliminarRespuestasActividadController(req, res, next) {
     }
     next(error);
   }
+}
+
+//NUEVAS FUNCIONES
+
+export async function crearRespuestaActividadController(req,res){
+  try{
+  const {id_pregunta} = req.params
+  const {respuesta, es_correcta} = req.body;
+
+  const respuestaActividad = await crearRespuestaParaActividad(respuesta, es_correcta, id_pregunta)
+
+  res.status(200).json({respuestaActividad})
+  }catch(error){
+    throw new Error(error.message)
+    console.log("Error", error.message)
+  }
+
 }

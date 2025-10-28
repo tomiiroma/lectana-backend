@@ -6,7 +6,8 @@ import {
   obtenerRespuestaPorIdController,
   actualizarRespuestaController,
   eliminarRespuestaController,
-  eliminarRespuestasActividadController
+  eliminarRespuestasActividadController,
+  crearRespuestaActividadController
 } from '../controllers/respuesta_actividad.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -36,5 +37,10 @@ router.delete('/:id', eliminarRespuestaController);
 
 // 7. DELETE /respuesta/pregunta/:id - Eliminar todas las respuestas de una pregunta
 router.delete('/pregunta/:id', eliminarRespuestasActividadController);
+
+
+//Nuevas Rutas
+
+router.post("/crearRespuestaActividad:id_pregunta", crearRespuestaActividadController)
 
 export default router;

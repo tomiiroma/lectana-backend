@@ -411,3 +411,21 @@ export async function obtenerActividadPorIdConAulas(id_actividad) {
   if (error) throw new Error(error.message);
   return data;
 }
+
+
+export async function crearActividad(fecha_entrega, tipo, descripcion, id_cuento, id_docente){
+if (!fecha_entrega || !tipo || !id_cuento || !id_docente) {
+    throw new Error('Faltan parámetros requeridos');
+  }
+
+    const fecha = new Date().toISOString();
+    const { data, error } = await supabaseAdmin
+    .from('actividad')
+    .insert({fecha_entrega: fecha_entrega, fecha_publicacion: fecha, tipo: tipo, descripcion: descripcion, cuento_id_cuento: id_cuento, docente_id_docente: id_docente})
+    .select()
+
+    if(error){
+      throw new Error(error.message)
+    }
+    return data
+  }

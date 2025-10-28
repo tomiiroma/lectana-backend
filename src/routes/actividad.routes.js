@@ -9,7 +9,8 @@ import {
   eliminarActividadController,
   asignarActividadAAulasController,
   obtenerAulasDeActividadController,
-  removerActividadDeAulaController
+  removerActividadDeAulaController,
+  crearActividadController
 } from '../controllers/actividad.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -17,7 +18,7 @@ const router = Router();
 
 // Todas las rutas requieren autenticación de administrador
 router.use(requireAuth);
-router.use(requireRole('administrador'));
+router.use(requireRole('administrador', 'docente'));
 
 // 1. POST /actividad - Crear actividad con cuento (cuento requerido desde el inicio)
 router.post('/', crearActividadConCuentoController);
@@ -53,5 +54,11 @@ router.get('/:id/aulas', obtenerAulasDeActividadController);
 
 // 9. DELETE /actividad/:id/aulas/:aulaId - Remover actividad de un aula específica
 router.delete('/:id/aulas/:aulaId', removerActividadDeAulaController);
+
+
+
+//NUEVAS RUTAS
+
+router.post("/crearActividad",crearActividadController)
 
 export default router;
