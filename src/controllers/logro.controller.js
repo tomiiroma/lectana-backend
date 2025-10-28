@@ -9,47 +9,20 @@ import {
   obtenerLogrosAlumno
 } from '../services/logro.service.js';
 import { supabaseAdmin } from '../config/supabase.js';
+import { subirImagenLogro, eliminarImagenLogro } from '../services/logro.imagen.service.js';
 import { crearLogroSchema, actualizarLogroSchema, idSchema } from '../schemas/logroSchema.js';
 
-async function subirImagenASupabase(file) {
-  try {
-    const nombreArchivo = `logro_${Date.now()}_${file.originalname}`;
-    
-    const { data, error } = await supabaseAdmin.storage
-      .from('logros')
-      .upload(nombreArchivo, file.buffer, {
-        contentType: file.mimetype,
-        cacheControl: '3600',
-        upsert: false
-      });
-    
-    if (error) {
-      console.error('Error subiendo imagen a Supabase:', error);
-      throw new Error(`Error al subir imagen: ${error.message}`);
-    }
-    
-
-    const { data: urlData } = supabaseAdmin.storage
-      .from('logros')
-      .getPublicUrl(nombreArchivo);
-    
-    return urlData.publicUrl;
-  } catch (error) {
-    console.error('Error en subirImagenASupabase:', error);
-    throw error;
-  }
-}
 
 export async function crearLogroController(req, res, next) {
   try {
-
-   
+    
     if (!req.file) {
       return res.status(400).json({ 
         ok: false, 
         error: 'La imagen es obligatoria para crear un logro' 
       });
     }
+
 
     const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!tiposPermitidos.includes(req.file.mimetype)) {
@@ -69,22 +42,44 @@ export async function crearLogroController(req, res, next) {
 
     
     const dataValidada = crearLogroSchema.parse(req.body);
-  
-    const urlImagen = await subirImagenASupabase(req.file);
-  
     
+  
     const result = await crearLogro({
       ...dataValidada,
-      url_imagen: urlImagen
+      url_imagen: null 
     });
     
-    console.log('✅ Logro creado exitosamente:', result);
+    console.log(' Logro creado con ID:', result.id_logros);
     
-    res.status(201).json({ 
-      ok: true, 
-      data: result,
-      message: 'Logro creado exitosamente con imagen' 
-    });
+    
+    try {
+      const { url: urlImagen } = await subirImagenLogro(
+        result.id_logros, 
+        req.file.buffer, 
+        req.file.originalname
+      );
+      
+      console.log(' Imagen subida:', urlImagen);
+      
+      
+      const logroActualizado = await actualizarLogro(result.id_logros, {
+        url_imagen: urlImagen
+      });
+      
+      console.log(' Logro actualizado con imagen');
+      
+      res.status(201).json({ 
+        ok: true, 
+        data: logroActualizado,
+        message: 'Logro creado exitosamente con imagen' 
+      });
+    } catch (imageError) {
+      
+      console.error(' Error al subir imagen, eliminando logro...');
+      await eliminarLogro(result.id_logros);
+      throw new Error(`Error al procesar imagen: ${imageError.message}`);
+    }
+    
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error(' Error de validación:', error.errors);
@@ -131,14 +126,83 @@ export async function listarLogrosController(req, res, next) {
 export async function actualizarLogroController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
-    const data = actualizarLogroSchema.parse(req.body);
-    const result = await actualizarLogro(id, data);
-    res.json({ ok: true, data: result });
+    
+    console.log(' Actualizando logro:', id);
+    console.log(' Datos:', req.body);
+    console.log(' Nueva imagen:', req.file ? req.file.originalname : 'No hay nueva imagen');
+    
+    
+    const logroActual = await obtenerLogroPorId(id);
+    
+
+    const dataValidada = actualizarLogroSchema.parse(req.body);
+    
+  
+    if (req.file) {
+      
+      const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!tiposPermitidos.includes(req.file.mimetype)) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'Solo se aceptan imágenes JPG, PNG, GIF o WebP' 
+        });
+      }
+
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'La imagen es demasiado grande. Máximo 5MB' 
+        });
+      }
+
+      try {
+        console.log('Subiendo nueva imagen...');
+        
+      
+        const { url: nuevaUrl } = await subirImagenLogro(id, req.file.buffer, req.file.originalname);
+        
+        console.log('Nueva imagen subida:', nuevaUrl);
+        
+        
+        if (logroActual.url_imagen) {
+          console.log(' Eliminando imagen antigua:', logroActual.url_imagen);
+          await eliminarImagenLogro(logroActual.url_imagen);
+        }
+        
+        
+        dataValidada.url_imagen = nuevaUrl;
+      } catch (imageError) {
+        console.error('Error procesando imagen:', imageError);
+        return res.status(500).json({
+          ok: false,
+          error: `Error al procesar imagen: ${imageError.message}`
+        });
+      }
+    }
+    
+    
+    const logroActualizado = await actualizarLogro(id, dataValidada);
+    
+    console.log(' Logro actualizado exitosamente');
+    
+    res.json({ 
+      ok: true, 
+      data: logroActualizado,
+      message: 'Logro actualizado exitosamente' 
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Validación fallida', 
+        detalles: error.errors 
+      });
     }
-    next(error);
+    console.error(' Error en actualizarLogroConImagenController:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message || 'Error interno del servidor'
+    });
   }
 }
 

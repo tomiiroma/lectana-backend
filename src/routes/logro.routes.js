@@ -35,7 +35,9 @@ router.post('/verificar', requireAuth, verificarLogrosController);
 router.post('/', requireAuth, requireRole('administrador'), upload.single('imagen'), crearLogroController);
 router.get('/', requireAuth, requireRole('administrador'), listarLogrosController);
 router.get('/:id', requireAuth, requireRole('administrador'), obtenerLogroController);
-router.put('/:id', requireAuth, requireRole('administrador'), actualizarLogroController);
+
+router.put('/:id', requireAuth, requireRole('administrador'), upload.single('imagen'), actualizarLogroController);
+
 router.delete('/:id', requireAuth, requireRole('administrador'), eliminarLogroController);
 
 export default router;

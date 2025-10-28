@@ -54,3 +54,34 @@ export function validarTipoImagenLogro(mimetype) {
   ];
   return tiposPermitidos.includes(mimetype);
 }
+
+
+export async function eliminarImagenLogro(urlImagen) {
+  try {
+    if (!urlImagen) return;
+    
+    
+    const urlParts = urlImagen.split('/logros/');
+    if (urlParts.length < 2) {
+      console.log('URL de imagen inválida:', urlImagen);
+      return;
+    }
+    
+    const filePath = urlParts[1]; 
+    
+    console.log('Eliminando imagen antigua:', filePath);
+    
+    const { error } = await supabaseAdmin.storage
+      .from('logros')
+      .remove([filePath]);
+
+    if (error) {
+      console.error('Error al eliminar imagen:', error.message);
+    
+    } else {
+      console.log(' Imagen antigua eliminada');
+    }
+  } catch (error) {
+    console.error('Error en eliminarImagenLogro:', error);
+  }
+}

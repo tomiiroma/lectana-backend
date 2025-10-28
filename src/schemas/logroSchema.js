@@ -14,5 +14,5 @@ export const actualizarLogroSchema = z.object({
 });
 
 export const idSchema = z.object({
-  id: z.string().uuid(),
+   id: z.coerce.number().int().positive(),
 });
