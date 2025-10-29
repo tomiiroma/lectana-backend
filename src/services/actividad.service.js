@@ -413,15 +413,25 @@ export async function obtenerActividadPorIdConAulas(id_actividad) {
 }
 
 
-export async function crearActividad(fecha_entrega, tipo, descripcion, id_cuento, id_docente){
-if (!fecha_entrega || !tipo || !id_cuento || !id_docente) {
+export async function crearActividad(fecha_entrega, tipo, descripcion, id_cuento, id_usuario){
+if (!fecha_entrega || !tipo || !id_cuento || !id_usuario) {
     throw new Error('Faltan parámetros requeridos');
   }
 
+
+  const { data: docenteData, error: docenteError } = await supabaseAdmin
+    .from('docente')
+    .select('id_docente')
+    .eq('usuario_id_usuario', id_usuario)
+    .single();
+
+  if (docenteError || !docenteData) {
+    throw new Error('El docente no existe');
+  }
     const fecha = new Date().toISOString();
     const { data, error } = await supabaseAdmin
     .from('actividad')
-    .insert({fecha_entrega: fecha_entrega, fecha_publicacion: fecha, tipo: tipo, descripcion: descripcion, cuento_id_cuento: id_cuento, docente_id_docente: id_docente})
+    .insert({fecha_entrega: fecha_entrega, fecha_publicacion: fecha, tipo: tipo, descripcion: descripcion, cuento_id_cuento: id_cuento, docente_id_docente: docenteData.id_docente})
     .select()
 
     if(error){

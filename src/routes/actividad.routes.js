@@ -59,6 +59,6 @@ router.delete('/:id/aulas/:aulaId', removerActividadDeAulaController);
 
 //NUEVAS RUTAS
 
-router.post("/crearActividad",crearActividadController)
+router.post("/crearActividad", requireAuth, requireRole('docente'), crearActividadController)
 
 export default router;

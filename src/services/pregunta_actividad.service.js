@@ -209,7 +209,7 @@ export async function actualizarPreguntaCompleta(id_pregunta_actividad, { enunci
 
 
 //  NUEVAS FUNCIONES
-export async function crearPreguntaParaActividad(enunciado, id_actividad){
+export async function crearPreguntaParaActividad(id_actividad, enunciado ){
   if(!enunciado || !id_actividad){
     throw new Error("No existe el enunciado")
   }
