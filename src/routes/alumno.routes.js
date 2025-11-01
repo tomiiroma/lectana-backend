@@ -5,7 +5,8 @@ import {
   obtenerPerfilAlumnoController,
   actualizarPerfilAlumnoController,
   obtenerAlumnoPorIdController,
-  adminActualizarAlumnoController
+  adminActualizarAlumnoController,
+  responderPreguntaController
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -30,4 +31,6 @@ router.get('/admin-listar-alumnos', requireAuth, requireRole('administrador'), l
 router.get('/admin-obtener-alumno/:id', requireAuth, requireRole('administrador'), obtenerAlumnoPorIdController);
 router.put('/admin-actualizar-alumno/:id', requireAuth, requireRole('administrador'), adminActualizarAlumnoController);
 
+
+router.post("/responder-pregunta/:id_pregunta", requireAuth, requireRole("alumno"), responderPreguntaController)
 export default router;

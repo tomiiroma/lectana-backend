@@ -8,7 +8,6 @@ import {
   eliminarRespuestaUsuario,
   verificarRespuestaExistente,
   obtenerEstadisticasActividad,
-  crearRespuestaAbierta
 } from '../services/respuesta_usuario.service.js';
 
 import { crearRespuestaUsuarioSchema, actualizarRespuestaUsuarioSchema, idSchema } from '../schemas/respuestaUsuarioSchema.js';
@@ -217,19 +216,4 @@ export async function verificarRespuestaExistenteController(req, res, next) {
   }
 }
 
-//NUEVAS FUNCIONES
 
-export async function crearRespuestaAbiertaController(req,res){
-  try{
-  const {id_pregunta} = req.params;
-  const {respuesta_texto} = req.body;
-
-  const respuestaAbierta = await crearRespuestaAbierta(id_pregunta, respuesta_texto)
-
-  res.status(200).json({respuestaAbierta})
-  }catch(error){
-    throw new Error(error.message)
-    console.log("Error", error.message)
-  }
-
-}

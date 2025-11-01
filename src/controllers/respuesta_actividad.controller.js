@@ -179,9 +179,9 @@ export async function eliminarRespuestasActividadController(req, res, next) {
 export async function crearRespuestaActividadController(req,res){
   try{
   const {id_pregunta} = req.params
-  const {respuesta, es_correcta} = req.body;
+  const {respuestas, respuesta_correcta} = req.body;
 
-  const respuestaActividad = await crearRespuestaParaActividad(respuesta, es_correcta, id_pregunta)
+  const respuestaActividad = await crearRespuestaParaActividad(respuestas, respuesta_correcta, id_pregunta)
 
   res.status(200).json({respuestaActividad})
   }catch(error){

@@ -224,3 +224,21 @@ export async function adminActualizarAlumno(alumnoId, updates) {
   return await obtenerAlumnoPorId(alumnoId);
 }
 
+export async function responderPregunta(respuesta, id_pregunta, id_alumno){
+    if(!respuesta || !id_pregunta || !id_alumno){
+      throw new Error("Faltan Datos")
+    }
+
+    const {data, error} = await supabaseAdmin
+    .from('respuesta_usuario')
+    .insert({respuesta_texto: respuesta, pregunta_actividad_id_pregunta_actividad: id_pregunta, alumno_id_alumno: id_alumno})
+    .select()
+        if(error){
+                console.log("Error", error.message)
+
+      throw new Error("Error al crear respuesta")
+    }
+
+    return data;
+}
+

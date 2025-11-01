@@ -8,7 +8,6 @@ import {
   eliminarRespuestaUsuarioController,
   obtenerEstadisticasActividadController,
   verificarRespuestaExistenteController,
-  crearRespuestaAbiertaController
 } from '../controllers/respuesta_usuario.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -42,7 +41,4 @@ router.get('/estadisticas/:id', obtenerEstadisticasActividadController);
 router.get('/verificar/:alumnoId/:preguntaId', verificarRespuestaExistenteController);
 
 
-//NUEVAS RUTAS
-
-router.post("/crearRespuestaAbierta/:id_pregunta", crearRespuestaAbiertaController)
 export default router;

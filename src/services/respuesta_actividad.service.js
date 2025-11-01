@@ -93,14 +93,14 @@ export async function eliminarRespuestasActividad(pregunta_actividad_id_pregunta
 
 //NUEVAS FUNCIONES
 
-export async function crearRespuestaParaActividad(respuesta,es_correcta, id_pregunta ){
-    if(!respuesta || !id_pregunta || es_correcta === undefined || es_correcta === null){
+export async function crearRespuestaParaActividad(respuestas, respuesta_correcta, id_pregunta ){
+    if( !id_pregunta || !respuestas || !respuesta_correcta){
       throw new Error("Faltan campos")
     }
 
     const {data, error} = await supabaseAdmin
     .from('respuesta_actividad')
-    .insert({respuesta: respuesta, es_correcta: es_correcta, pregunta_actividad_id_pregunta_actividad: id_pregunta})
+    .insert({respuestas: respuestas, respuesta_correcta: respuesta_correcta, pregunta_actividad_id_pregunta_actividad: id_pregunta})
     .select()
 
     if(error){

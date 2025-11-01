@@ -14,8 +14,6 @@ import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 const router = Router();
 
 // Todas las rutas requieren autenticación de administrador
-router.use(requireAuth);
-router.use(requireRole('administrador'));
 
 // 1. POST /respuesta - Crear respuesta individual
 router.post('/', crearRespuestaController);
@@ -41,6 +39,6 @@ router.delete('/pregunta/:id', eliminarRespuestasActividadController);
 
 //Nuevas Rutas
 
-router.post("/crearRespuestaActividad:id_pregunta", crearRespuestaActividadController)
+router.post("/crearRespuestaActividad/:id_pregunta",requireAuth, requireRole('docente'),  crearRespuestaActividadController)
 
 export default router;
