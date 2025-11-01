@@ -6,11 +6,17 @@ import {
   actualizarLogro, 
   eliminarLogro,
   verificarLogros,
-  obtenerLogrosAlumno
+  obtenerLogrosAlumno,
+  obtenerAlumnosDelLogro,
+  // Alumno 
+  desbloquearLogro,
+  actualizarProgresoLogro,
+  obtenerLogrosConProgreso,
+  obtenerLogrosDesbloqueados,
+  obtenerEstadisticasLogros
 } from '../services/logro.service.js';
-import { supabaseAdmin } from '../config/supabase.js';
 import { subirImagenLogro, eliminarImagenLogro } from '../services/logro.imagen.service.js';
-import { crearLogroSchema, actualizarLogroSchema, idSchema } from '../schemas/logroSchema.js';
+import { crearLogroSchema, actualizarLogroSchema, idSchema, desbloquearLogroSchema, actualizarProgresoSchema } from '../schemas/logroSchema.js';
 
 
 export async function crearLogroController(req, res, next) {
@@ -234,6 +240,196 @@ export async function obtenerLogrosAlumnoController(req, res, next) {
     const usuarioId = req.user.sub;
     const result = await obtenerLogrosAlumno(usuarioId);
     res.json({ ok: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+// Nuevo 
+
+ /**
+ * GET /api/logros/:id/alumnos
+ * Obtiene todos los alumnos que desbloquearon un logro específico (Solo Admin)
+ */
+export async function obtenerAlumnosLogroController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    
+    // Verificar que el logro existe
+    const logro = await obtenerLogroPorId(id);
+    
+    // Obtener alumnos que desbloquearon este logro
+    const alumnos = await obtenerAlumnosDelLogro(id);
+
+    res.json({
+      ok: true,
+      data: {
+        logro,
+        total_desbloqueados: alumnos.length,
+        alumnos
+      }
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.errors
+      });
+    }
+    if (error.message.includes('no encontrado')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
+    next(error);
+  }
+}
+
+// ================================================================================================================================================================================
+// ALUMNOS
+
+
+
+ 
+ // Desbloquea un logro para el alumno autenticado
+ 
+export async function desbloquearLogroController(req, res, next) {
+  try {
+    // Validar datos de entrada
+    const { logro_id } = desbloquearLogroSchema.parse(req.body);
+
+    console.log('🔍 req.user:', req.user);
+    console.log('🔍 req.user.sub:', req.user.sub);
+    
+    // Obtener ID del alumno del token JWT (req.user.sub)
+    const alumnoId = req.user.sub;
+  
+
+    // Desbloquear el logro
+    const result = await desbloquearLogro(alumnoId, logro_id);
+
+    // Respuesta diferente según si ya estaba desbloqueado o no
+    const statusCode = result.yaDesbloqueado ? 200 : 201;
+    const message = result.yaDesbloqueado 
+      ? 'El logro ya estaba desbloqueado' 
+      : 'Logro desbloqueado exitosamente';
+
+    res.status(statusCode).json({
+      ok: true,
+      data: result,
+      message
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.errors
+      });
+    }
+    if (error.message.includes('no encontrado')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
+    next(error);
+  }
+}
+
+
+
+ // Actualiza el progreso de un logro (0-100)
+ 
+export async function actualizarProgresoLogroController(req, res, next) {
+  try {
+    const { logro_id, progreso } = actualizarProgresoSchema.parse(req.body);
+    const alumnoId = req.user.sub;
+
+    const result = await actualizarProgresoLogro(alumnoId, logro_id, progreso);
+
+    // Si se acaba de desbloquear, mensaje
+    const message = result.recienDesbloqueado 
+      ? '¡Logro desbloqueado!' 
+      : 'Progreso actualizado';
+
+    res.json({
+      ok: true,
+      data: result,
+      message
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.errors
+      });
+    }
+    if (error.message.includes('no encontrado')) {
+      return res.status(404).json({
+        ok: false,
+        error: error.message
+      });
+    }
+    next(error);
+  }
+}
+
+
+
+ // Obtiene todos los logros con el progreso del alumno
+ 
+export async function obtenerLogrosDisponiblesController(req, res, next) {
+  try {
+    const alumnoId = req.user.sub;
+    const logros = await obtenerLogrosConProgreso(alumnoId);
+
+    res.json({
+      ok: true,
+      data: logros,
+      total: logros.length
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+
+ // Obtiene solo los logros desbloqueados del alumno
+ 
+export async function obtenerMisLogrosController(req, res, next) {
+  try {
+    const alumnoId = req.user.sub;
+    const logros = await obtenerLogrosDesbloqueados(alumnoId);
+
+    res.json({
+      ok: true,
+      data: logros,
+      total: logros.length
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+ 
+  //Obtiene estadísticas de logros del alumno
+ 
+export async function obtenerEstadisticasLogrosController(req, res, next) {
+  try {
+    const alumnoId = req.user.sub;
+    const estadisticas = await obtenerEstadisticasLogros(alumnoId);
+
+    res.json({
+      ok: true,
+      data: estadisticas
+    });
   } catch (error) {
     next(error);
   }
