@@ -206,3 +206,22 @@ export async function actualizarPreguntaCompleta(id_pregunta_actividad, { enunci
     throw new Error(`Error al actualizar pregunta completa: ${error.message}`);
   }
 }
+
+
+//  NUEVAS FUNCIONES
+export async function crearPreguntaParaActividad(id_actividad, enunciado ){
+  if(!enunciado || !id_actividad){
+    throw new Error("No existe el enunciado")
+  }
+
+  const {data, error} = await supabaseAdmin
+  .from('pregunta_actividad')
+  .insert({enunciado: enunciado, actividad_id_actividad: id_actividad})
+  .select()
+
+  if(error){
+    console.log("Error: ", error.message);
+  }
+  return data
+
+}

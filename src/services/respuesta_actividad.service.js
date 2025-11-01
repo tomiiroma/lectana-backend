@@ -89,3 +89,24 @@ export async function eliminarRespuestasActividad(pregunta_actividad_id_pregunta
   
   if (error) throw new Error(error.message);
 }
+
+
+//NUEVAS FUNCIONES
+
+export async function crearRespuestaParaActividad(respuesta,es_correcta, id_pregunta ){
+    if(!respuesta || !id_pregunta || es_correcta === undefined || es_correcta === null){
+      throw new Error("Faltan campos")
+    }
+
+    const {data, error} = await supabaseAdmin
+    .from('respuesta_actividad')
+    .insert({respuesta: respuesta, es_correcta: es_correcta, pregunta_actividad_id_pregunta_actividad: id_pregunta})
+    .select()
+
+    if(error){
+      throw new Error("Error al crear respuesta")
+      console.log("Error", error.message)
+    }
+
+    return data;
+}

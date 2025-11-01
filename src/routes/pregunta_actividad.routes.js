@@ -8,15 +8,15 @@ import {
   eliminarPreguntaController,
   eliminarPreguntasActividadController,
   agregarPreguntaAActividadController,
-  actualizarPreguntaCompletaController
+  actualizarPreguntaCompletaController,
+  crearPreguntaParaActividadController
 } from '../controllers/pregunta_actividad.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
 // Todas las rutas requieren autenticación de administrador
-router.use(requireAuth);
-router.use(requireRole('administrador'));
+
 
 // 1. POST /pregunta - Crear pregunta individual
 router.post('/', crearPreguntaController);
@@ -44,5 +44,10 @@ router.delete('/actividad/:id', eliminarPreguntasActividadController);
 
 // 8. POST /pregunta/agregar - Agregar pregunta con respuestas a actividad existente
 router.post('/agregar', agregarPreguntaAActividadController);
+
+
+//NUEVAS RUTAS
+
+router.post("/crearPreguntaActividad/:id_actividad",requireAuth, requireRole('docente'), crearPreguntaParaActividadController)
 
 export default router;

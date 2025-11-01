@@ -7,7 +7,8 @@ import {
   actualizarRespuestaUsuarioController,
   eliminarRespuestaUsuarioController,
   obtenerEstadisticasActividadController,
-  verificarRespuestaExistenteController
+  verificarRespuestaExistenteController,
+  crearRespuestaAbiertaController
 } from '../controllers/respuesta_usuario.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -40,4 +41,8 @@ router.get('/estadisticas/:id', obtenerEstadisticasActividadController);
 // 8. GET /respuesta-usuario/verificar/:alumnoId/:preguntaId - Verificar si alumno ya respondió
 router.get('/verificar/:alumnoId/:preguntaId', verificarRespuestaExistenteController);
 
+
+//NUEVAS RUTAS
+
+router.post("/crearRespuestaAbierta/:id_pregunta", crearRespuestaAbiertaController)
 export default router;
