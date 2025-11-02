@@ -215,12 +215,38 @@ export async function actualizarLogroController(req, res, next) {
 export async function eliminarLogroController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
+    
+    console.log('Intentando eliminar logro:', id);
+    
     const result = await eliminarLogro(id);
+    
+    console.log('Logro eliminado exitosamente');
+    
     res.json({ ok: true, ...result });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Validación fallida', 
+        detalles: error.flatten() 
+      });
     }
+    
+    
+    if (error.message.includes('no encontrado')) {
+      return res.status(404).json({ 
+        ok: false, 
+        error: error.message 
+      });
+    }
+    
+    if (error.message.includes('alumnos que ya lo han desbloqueado')) {
+      return res.status(409).json({ 
+        ok: false, 
+        error: error.message 
+      });
+    }
+    
     next(error);
   }
 }

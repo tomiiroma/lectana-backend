@@ -1,5 +1,6 @@
 
 import { supabaseAdmin } from '../config/supabase.js';
+import { eliminarImagenLogro } from './logro.imagen.service.js';
 
 // Admin
 
@@ -66,16 +67,57 @@ export async function actualizarLogro(id, data) {
 }
 
 export async function eliminarLogro(id) {
-  const { error } = await supabaseAdmin
+ 
+  const { data: logro, error: logroError } = await supabaseAdmin
+    .from('logros')
+    .select('*')
+    .eq('id_logros', id)
+    .single();
+
+  if (logroError || !logro) {
+    throw new Error('Logro no encontrado');
+  }
+
+
+  const { data: alumnosConLogro, error: alumnosError } = await supabaseAdmin
+    .from('alumno_has_logros')
+    .select('alumno_id_alumno')
+    .eq('logros_id_logros', id)
+    .limit(1);
+
+  if (alumnosError) {
+    throw new Error(`Error al verificar alumnos: ${alumnosError.message}`);
+  }
+
+  if (alumnosConLogro && alumnosConLogro.length > 0) {
+    throw new Error('No se puede eliminar el logro porque hay alumnos que ya lo han desbloqueado');
+  }
+
+ 
+  if (logro.url_imagen) {
+    try {
+      await eliminarImagenLogro(logro.url_imagen);
+      console.log('Imagen eliminada de Storage');
+    } catch (imagenError) {
+      console.error('Error al eliminar imagen:', imagenError.message);
+      
+    }
+  }
+
+ 
+  const { error: deleteError } = await supabaseAdmin
     .from('logros')
     .delete()
     .eq('id_logros', id);
 
-  if (error) {
-    throw new Error(`Error al eliminar logro: ${error.message}`);
+  if (deleteError) {
+    throw new Error(`Error al eliminar logro: ${deleteError.message}`);
   }
 
-  return { message: 'Logro eliminado exitosamente' };
+  return { 
+    message: 'Logro eliminado exitosamente',
+    id_logros: id
+  };
 }
 
 export async function verificarLogros(usuarioId) {
@@ -128,7 +170,6 @@ export async function obtenerAlumnosDelLogro(logroId) {
       )
     `)
     .eq('logros_id_logros', logroId)
-    .eq('progreso', 100)
     .order('fecha_desbloqueo', { ascending: false });
 
   if (error) {
