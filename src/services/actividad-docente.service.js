@@ -162,8 +162,8 @@ export async function obtenerActividadesDeDocente(docenteId) {
         enunciado,
         respuesta_actividad(
           id_respuesta_actividad,
-          respuesta,
-          es_correcta
+          respuestas,
+          respuesta_correcta
         )
       )
     `)
@@ -401,5 +401,6 @@ export async function obtenerActividadesDeAulaDocente(aulaId, docenteId) {
   if (error) throw new Error(error.message);
   return data;
 }
+
 
 

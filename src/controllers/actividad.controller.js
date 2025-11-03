@@ -281,10 +281,16 @@ export async function obtenerActividadesDeAulaController(req, res, next) {
 
   export async function crearActividadController(req, res){
     try{
-      const {fecha_entrega,tipo, descripcion,id_cuento} = req.body;
+      const {fecha_entrega,tipo, descripcion,id_cuento, aulas_ids} = req.body;
       const id_usuario = req.user.sub;
       const actividad = await crearActividad(fecha_entrega,tipo, descripcion , id_cuento , id_usuario);
-      res.status(200).json({actividad});
+
+      let asignaciones = [];
+      if (Array.isArray(aulas_ids) && aulas_ids.length > 0) {
+        asignaciones = await asignarActividadAAulas(actividad.id_actividad, aulas_ids);
+      }
+
+      res.status(201).json({actividad, asignaciones});
     }catch(error){
       console.log("Error: ", error.message);
     }

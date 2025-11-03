@@ -37,8 +37,8 @@ export async function obtenerRespuestasUsuarioActividad(alumno_id_alumno, activi
       ),
       respuesta_actividad:respuesta_actividad_id_respuesta_actividad(
         id_respuesta_actividad,
-        respuesta,
-        es_correcta
+        respuestas,
+        respuesta_correcta
       )
     `)
     .eq('alumno_id_alumno', alumno_id_alumno)
@@ -164,7 +164,7 @@ export async function obtenerEstadisticasActividad(actividad_id_actividad) {
   
   // Calcular estadísticas
   const totalRespuestas = data.length;
-  const respuestasCorrectas = data.filter(r => r.respuesta_actividad?.es_correcta).length;
+  const respuestasCorrectas = data.filter(r => r.respuesta_actividad?.respuesta_correcta).length;
   const porcentajeCorrecto = totalRespuestas > 0 ? (respuestasCorrectas / totalRespuestas) * 100 : 0;
   
   return {

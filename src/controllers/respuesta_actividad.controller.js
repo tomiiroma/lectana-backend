@@ -183,10 +183,10 @@ export async function crearRespuestaActividadController(req,res){
 
   const respuestaActividad = await crearRespuestaParaActividad(respuestas, respuesta_correcta, id_pregunta)
 
-  res.status(200).json({respuestaActividad})
+  res.status(201).json({respuestaActividad})
   }catch(error){
-    throw new Error(error.message)
-    console.log("Error", error.message)
+    const status = error.message?.toLowerCase().includes('foreign key') ? 400 : 500;
+    return res.status(status).json({ ok: false, message: error.message })
   }
 
 }

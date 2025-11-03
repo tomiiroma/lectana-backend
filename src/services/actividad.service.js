@@ -114,8 +114,8 @@ export async function obtenerTodasLasActividades() {
         enunciado,
         respuesta_actividad(
           id_respuesta_actividad,
-          respuesta,
-          es_correcta
+          respuestas,
+          respuesta_correcta
         )
       )
     `)
@@ -146,8 +146,8 @@ export async function obtenerActividadPorId(id_actividad) {
         enunciado,
         respuesta_actividad(
           id_respuesta_actividad,
-          respuesta,
-          es_correcta
+          respuestas,
+          respuesta_correcta
         )
       )
     `)
@@ -369,8 +369,8 @@ export async function obtenerTodasLasActividadesConAulas() {
         enunciado,
         respuesta_actividad(
           id_respuesta_actividad,
-          respuesta,
-          es_correcta
+          respuestas,
+          respuesta_correcta
         )
       )
     `)
@@ -429,10 +429,11 @@ if (!fecha_entrega || !tipo || !id_cuento || !id_usuario) {
     throw new Error('El docente no existe');
   }
     const fecha = new Date().toISOString();
-    const { data, error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('actividad')
     .insert({fecha_entrega: fecha_entrega, fecha_publicacion: fecha, tipo: tipo, descripcion: descripcion, cuento_id_cuento: id_cuento, docente_id_docente: docenteData.id_docente})
-    .select()
+    .select('*')
+    .single()
 
     if(error){
       throw new Error(error.message)
