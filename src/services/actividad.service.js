@@ -401,8 +401,8 @@ export async function obtenerActividadPorIdConAulas(id_actividad) {
         enunciado,
         respuesta_actividad(
           id_respuesta_actividad,
-          respuesta,
-          es_correcta
+          respuestas,
+          respuesta_correcta
         )
       )
     `)

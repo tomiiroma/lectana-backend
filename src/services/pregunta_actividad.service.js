@@ -40,8 +40,8 @@ export async function obtenerPreguntasActividad(actividad_id_actividad) {
       *,
       respuesta_actividad(
         id_respuesta_actividad,
-        respuesta,
-        es_correcta
+        respuestas,
+        respuesta_correcta
       )
     `)
     .eq('actividad_id_actividad', actividad_id_actividad)
@@ -59,8 +59,8 @@ export async function obtenerPreguntaPorId(id_pregunta_actividad) {
       *,
       respuesta_actividad(
         id_respuesta_actividad,
-        respuesta,
-        es_correcta
+        respuestas,
+        respuesta_correcta
       )
     `)
     .eq('id_pregunta_actividad', id_pregunta_actividad)
