@@ -119,6 +119,7 @@ export async function obtenerTodasLasActividades() {
         )
       )
     `)
+    .is('deleted_at', null)
     .order('fecha_publicacion', { ascending: false });
   if (error) throw new Error(error.message);
   return data;
@@ -152,6 +153,7 @@ export async function obtenerActividadPorId(id_actividad) {
       )
     `)
     .eq('id_actividad', id_actividad)
+    .is('deleted_at', null)
     .single();
   if (error) throw new Error(error.message);
   return data;
@@ -256,9 +258,15 @@ export async function actualizarActividadCompletaConPreguntas(id_actividad, { fe
 
 // Eliminar actividad
 export async function eliminarActividad(id_actividad) {
+  const { error: asignError } = await supabaseAdmin
+    .from('actividad_aula')
+    .delete()
+    .eq('actividad_id_actividad', id_actividad);
+  if (asignError) throw new Error(asignError.message);
+
   const { error } = await supabaseAdmin
     .from('actividad')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id_actividad', id_actividad);
   if (error) throw new Error(error.message);
 }
@@ -341,6 +349,7 @@ export async function obtenerActividadesDeAula(id_aula) {
       )
     `)
     .eq('aula_id_aula', id_aula)
+    .is('actividad.deleted_at', null)
     .order('fecha_asignacion', { ascending: false });
   
   if (error) throw new Error(error.message);
@@ -374,6 +383,7 @@ export async function obtenerTodasLasActividadesConAulas() {
         )
       )
     `)
+    .is('deleted_at', null)
     .order('fecha_publicacion', { ascending: false });
   if (error) throw new Error(error.message);
   return data;
@@ -407,6 +417,7 @@ export async function obtenerActividadPorIdConAulas(id_actividad) {
       )
     `)
     .eq('id_actividad', id_actividad)
+    .is('deleted_at', null)
     .single();
   if (error) throw new Error(error.message);
   return data;

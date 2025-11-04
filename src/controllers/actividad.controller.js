@@ -167,7 +167,7 @@ export async function eliminarActividadController(req, res, next) {
     await eliminarActividad(id);
     res.json({ 
       ok: true, 
-      mensaje: 'Actividad eliminada exitosamente' 
+      mensaje: 'Actividad eliminada (soft delete)' 
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

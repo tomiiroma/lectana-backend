@@ -167,6 +167,7 @@ export async function obtenerActividadesDeDocente(docenteId) {
         )
       )
     `)
+    .is('deleted_at', null)
     .eq('actividad_aula.aula.docente_id_docente', docenteId)
     .order('fecha_publicacion', { ascending: false });
   
@@ -202,6 +203,7 @@ export async function obtenerActividadPorIdDocente(actividadId, docenteId) {
       )
     `)
     .eq('id_actividad', actividadId)
+    .is('deleted_at', null)
     .single();
   
   if (error) throw new Error(error.message);
@@ -396,6 +398,7 @@ export async function obtenerActividadesDeAulaDocente(aulaId, docenteId) {
       )
     `)
     .eq('aula_id_aula', aulaId)
+    .is('actividad.deleted_at', null)
     .order('fecha_asignacion', { ascending: false });
   
   if (error) throw new Error(error.message);
