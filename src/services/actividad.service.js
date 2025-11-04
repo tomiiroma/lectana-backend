@@ -451,3 +451,20 @@ if (!fecha_entrega || !tipo || !id_cuento || !id_usuario) {
     }
     return data
   }
+
+  export async function getActividadPorAula(id_aula){
+    if(!id_aula){
+    throw new Error('Faltan parámetros requeridos');
+    }
+
+    const {data, error} = await supabaseAdmin
+    .from('actividad')
+    .select()
+    .eq('id_aula', id_aula)
+    
+
+        if(error){
+      throw new Error(error.message)
+    }
+    return data
+  }

@@ -242,6 +242,8 @@ export async function responderPregunta(respuesta, id_pregunta, id_alumno){
     return data;
 }
 
+
+
 export async function obtenerAulasAlumno(id_usuario) {
   if (!id_usuario) {
     throw new Error("Falta ID del alumno");
@@ -275,3 +277,5 @@ export async function obtenerAulasAlumno(id_usuario) {
 
   return data;
 }
+
+
