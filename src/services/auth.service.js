@@ -86,8 +86,10 @@ export async function registerAlumno({ nombre, apellido, email, edad, password, 
 
   // Crear usuario
   const usuario = await crearUsuario({ nombre, apellido, email, edad, password });
+
+  let alumno; // ✅ Necesario para devolver luego el alumno
+
   
-  // Si hay código de acceso, vincular al aula
   if (codigo_acceso) {
     const { data: aula } = await supabaseAdmin
       .from('aula')
@@ -103,20 +105,29 @@ export async function registerAlumno({ nombre, apellido, email, edad, password, 
         throw new Error('El aula ha alcanzado el límite máximo de 50 estudiantes');
       }
 
-      await supabaseAdmin
+      
+      const { data } = await supabaseAdmin
         .from('alumno')
         .insert({
           usuario_id_usuario: usuario.id_usuario,
           aula_id_aula: aula.id_aula
-        });
+        })
+        .select('*')
+        .single();
+
+      alumno = data; 
     }
   } else {
-    // Crear alumno sin aula
-    await supabaseAdmin
+   
+    const { data } = await supabaseAdmin
       .from('alumno')
       .insert({
         usuario_id_usuario: usuario.id_usuario
-      });
+      })
+      .select('*')
+      .single(); 
+
+    alumno = data; 
   }
 
   // Generar token
@@ -131,6 +142,7 @@ export async function registerAlumno({ nombre, apellido, email, edad, password, 
     token,
     role: 'alumno',
     user: usuario,
+    alumno, 
     message: 'Alumno registrado exitosamente'
   };
 }

@@ -13,8 +13,6 @@ import {
 
   // Alumnos
   desbloquearLogroController,
-  actualizarProgresoLogroController,
-  obtenerLogrosDisponiblesController,
   obtenerMisLogrosController,
   obtenerEstadisticasLogrosController
   
@@ -56,8 +54,7 @@ router.delete('/:id', requireAuth, requireRole('administrador'), eliminarLogroCo
 
 // Alumnos
 
-//logros disponibles con progreso del alumno
-router.get('/disponibles', requireAuth, obtenerLogrosDisponiblesController);
+
 
 //logros desbloqueados del alumno
 router.get('/mis-logros', requireAuth, obtenerMisLogrosController);
@@ -67,8 +64,7 @@ router.get('/estadisticas', requireAuth, obtenerEstadisticasLogrosController);
 
 router.post('/desbloquear', requireAuth, desbloquearLogroController);
 
-//Actualizar progreso del logro
-router.put('/progreso', requireAuth, actualizarProgresoLogroController);
+
 
 
 

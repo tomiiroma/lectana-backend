@@ -3,7 +3,25 @@ import { z } from 'zod';
 
 export const crearLogroSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio'),
-  descripcion: z.string().optional().default('')
+  descripcion: z.string().optional().default(''),
+  evento: z.enum(['registro', 'puntos', 'compras'], {
+    errorMap: () => ({ message: 'Evento debe ser: registro, puntos o compras' })
+  }),
+  valor: z.preprocess(
+    (val) => {
+      if (val === 'registro') return 1;
+      return val === '' || val === null || val === undefined ? 1 : Number(val);
+    },
+    z.number().int().min(1, 'El valor debe ser mínimo 1')
+  )
+}).refine((data) => {
+  if (data.evento === 'registro' && data.valor !== 1) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Los logros de tipo "registro" deben tener valor = 1',
+  path: ['valor']
 });
 
 
@@ -27,10 +45,3 @@ export const desbloquearLogroSchema = z.object({
   logro_id: z.coerce.number().int().positive('ID de logro inválido')
 });
 
-// actualizar progreso
-export const actualizarProgresoSchema = z.object({
-  logro_id: z.coerce.number().int().positive('ID de logro inválido'),
-  progreso: z.coerce.number()
-    .min(0, 'El progreso mínimo es 0')
-    .max(100, 'El progreso máximo es 100')
-});
