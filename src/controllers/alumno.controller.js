@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, obtenerAulasAlumno } from '../services/alumno.service.js';
 import { crearAlumnoSchema, listarSchema, actualizarPerfilSchema,adminActualizarAlumnoSchema } from '../schemas/alumnoSchema.js';
 import { idSchema } from "../schemas/idSchema.js";
 
@@ -118,8 +118,22 @@ export async function responderPreguntaController(req, res){
 
     res.status(200).json({respuestaPregunta})
   }catch(error){
-    throw new Error(error.message)
     console.log("Error", error.message)
+    throw new Error(error.message)
   }
 
 }
+
+  export async function obtenerAulasAlumnoController(req,res){
+    try{
+      const id_usuario = req.user.sub
+
+
+      const aulasAlumno = await obtenerAulasAlumno(id_usuario)
+
+      res.status(200).json({aulasAlumno});
+    }catch(error){
+      console.log("Error", error.message)
+      throw new Error(error.message)
+    }
+  }

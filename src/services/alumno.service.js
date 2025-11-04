@@ -242,3 +242,36 @@ export async function responderPregunta(respuesta, id_pregunta, id_alumno){
     return data;
 }
 
+export async function obtenerAulasAlumno(id_usuario) {
+  if (!id_usuario) {
+    throw new Error("Falta ID del alumno");
+  }
+
+  const { data: alumnoData, error: errorId } = await supabaseAdmin
+    .from("alumno")
+    .select("id_alumno")
+    .eq("usuario_id_usuario", id_usuario)
+    .single(); 
+    
+
+  const id_alumno = alumnoData.id_alumno;
+
+  const { data, error } = await supabaseAdmin
+    .from("alumno_has_aula")
+    .select(`
+      aula_id_aula,
+      aula (
+        id_aula,
+        nombre_aula,
+        grado
+      )
+    `)
+    .eq("alumno_id_alumno", id_alumno); 
+
+  if (error) {
+    console.error("Error SUPABASE:", error.message);
+    throw new Error(`Error al obtener aulas: ${error.message}`);
+  }
+
+  return data;
+}
