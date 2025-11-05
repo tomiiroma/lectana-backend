@@ -468,3 +468,55 @@ if (!fecha_entrega || !tipo || !id_cuento || !id_usuario) {
     }
     return data
   }
+
+
+
+export async function getActividadCompleta(id_actividad){
+      if(!id_actividad){
+            throw new Error('Faltan parámetros requeridos');
+      }
+
+        //Conseguir Preguntas
+      const {data: pregunta_actividad, error: errorPregunta} = await supabaseAdmin
+      .from('pregunta_actividad')
+      .select()
+      .eq('actividad_id_actividad', id_actividad)
+
+      if(errorPregunta){
+        console.log("Error", errorPregunta.message)
+        throw new Error("Error en pregunta_actividad")
+      }
+
+      console.log(pregunta_actividad)
+
+      // Validar que haya preguntas
+      if(!pregunta_actividad || pregunta_actividad.length === 0){
+        return []
+      }
+
+      // Extraer todos los IDs de las preguntas
+      const preguntaIds = pregunta_actividad.map(p => p.id_pregunta_actividad)
+      console.log('IDs de preguntas:', preguntaIds) // Para ver: [36, 52]
+
+      //Agarrar Respuestas - Buscar por TODOS los IDs
+      const {data: respuesta_actividad, error: errorRespuesta} = await supabaseAdmin
+      .from('respuesta_actividad')
+      .select()
+      .in('pregunta_actividad_id_pregunta_actividad', preguntaIds) // ← .in() para buscar por varios IDs
+
+      if(errorRespuesta){
+        console.log("Error", errorRespuesta.message)
+        throw new Error("Error en respuesta_actividad")
+      }
+      console.log(respuesta_actividad)
+
+      // Mapear cada pregunta con sus respuestas
+      const preguntasConRespuestas = pregunta_actividad.map(pregunta => ({
+        ...pregunta,
+        respuestas: respuesta_actividad?.filter(
+          respuesta => respuesta.pregunta_actividad_id_pregunta_actividad === pregunta.id_pregunta_actividad
+        ) || []
+      }))
+
+      return preguntasConRespuestas
+}

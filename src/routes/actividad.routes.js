@@ -11,7 +11,8 @@ import {
   obtenerAulasDeActividadController,
   removerActividadDeAulaController,
   crearActividadController,
-  getActividadPorAulaController
+  getActividadPorAulaController,
+  getActividadCompletaController
 } from '../controllers/actividad.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -63,5 +64,7 @@ router.delete('/:id/aulas/:aulaId', removerActividadDeAulaController);
 router.post("/crearActividad", requireAuth, requireRole('docente'), crearActividadController)
 
 router.get("/actividadesPorAula/:id_aula", requireAuth, getActividadPorAulaController)
+
+router.get("/actividadCompleta/:idActividad", requireAuth, getActividadCompletaController)
 
 export default router;

@@ -12,7 +12,8 @@ import {
   removerActividadDeAula,
   obtenerActividadesDeAula,
   crearActividad,
-  getActividadPorAula
+  getActividadPorAula,
+  getActividadCompleta
 } from '../services/actividad.service.js';
 import { idSchema } from '../schemas/idSchema.js';
 import { asignarAulasSchema , actualizarActividadCompletaSchema ,crearActividadCompletaSchema, actualizarActividadCompletaConPreguntasSchema, crearActividadConCuentoSchema } from '../schemas/actividadSchema,.js';
@@ -311,3 +312,21 @@ export async function obtenerActividadesDeAulaController(req, res, next) {
     }
   
   }
+
+export async function getActividadCompletaController(req, res){
+  
+  try{
+  const { idActividad }  = req.params;
+    console.log('id_actividad recibido:', idActividad); // ← Agregar esto
+
+      if(!idActividad){
+      return res.status(400).json({ ok: false, error: 'id_actividad es requerido' })
+    }
+
+    const actividadCompleta = await getActividadCompleta(idActividad)
+    res.status(200).json({actividadCompleta})
+
+  }catch(error){
+      console.log("Error: ", error.message);
+  }
+}
