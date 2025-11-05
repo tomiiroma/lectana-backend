@@ -13,6 +13,7 @@ import {
 
   // Alumnos
   desbloquearLogroController,
+  obtenerLogrosBloqueadosController,
   obtenerMisLogrosController,
   obtenerEstadisticasLogrosController
   
@@ -39,6 +40,24 @@ router.use((req, res, next) => {
 router.get('/alumno', requireAuth, obtenerLogrosAlumnoController);
 router.post('/verificar', requireAuth, verificarLogrosController);
 
+
+
+// Alumnos
+
+
+//logros desbloqueados del alumno
+router.get('/mis-logros', requireAuth, obtenerMisLogrosController);
+
+// logros bloqueados del alumno
+
+router.get('/bloqueados', requireAuth, obtenerLogrosBloqueadosController);
+
+//Obtener estadísticas de logros del alumno
+router.get('/estadisticas', requireAuth, obtenerEstadisticasLogrosController);
+
+router.post('/desbloquear', requireAuth, desbloquearLogroController);
+
+
 // Administrador
 
 router.post('/', requireAuth, requireRole('administrador'), upload.single('imagen'), crearLogroController);
@@ -52,17 +71,7 @@ router.put('/:id', requireAuth, requireRole('administrador'), upload.single('ima
 
 router.delete('/:id', requireAuth, requireRole('administrador'), eliminarLogroController);
 
-// Alumnos
 
-
-
-//logros desbloqueados del alumno
-router.get('/mis-logros', requireAuth, obtenerMisLogrosController);
-
-//Obtener estadísticas de logros del alumno
-router.get('/estadisticas', requireAuth, obtenerEstadisticasLogrosController);
-
-router.post('/desbloquear', requireAuth, desbloquearLogroController);
 
 
 

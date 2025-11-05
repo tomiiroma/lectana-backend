@@ -11,6 +11,7 @@ import {
   // Alumno 
   desbloquearLogro,
   obtenerLogrosDesbloqueados,
+  obtenerLogrosBloqueados,
   obtenerEstadisticasLogros
 } from '../services/logro.service.js';
 import { subirImagenLogro, eliminarImagenLogro } from '../services/logro.imagen.service.js';
@@ -325,8 +326,8 @@ export async function desbloquearLogroController(req, res, next) {
    
     const { logro_id } = desbloquearLogroSchema.parse(req.body);
 
-    console.log('🔍 req.user:', req.user);
-    console.log('🔍 req.user.sub:', req.user.sub);
+    console.log(' req.user:', req.user);
+    console.log(' req.user.sub:', req.user.sub);
     
     
     const alumnoId = req.user.sub;
@@ -372,6 +373,23 @@ export async function obtenerMisLogrosController(req, res, next) {
   try {
     const alumnoId = req.user.sub;
     const logros = await obtenerLogrosDesbloqueados(alumnoId);
+
+    res.json({
+      ok: true,
+      data: logros,
+      total: logros.length
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+ // Obtiene solo los logros que el alumno NO ha desbloqueado
+ 
+export async function obtenerLogrosBloqueadosController(req, res, next) {
+  try {
+    const alumnoId = req.user.sub;
+    const logros = await obtenerLogrosBloqueados(alumnoId);
 
     res.json({
       ok: true,

@@ -48,7 +48,7 @@ export async function registerAlumnoController(req, res, next) {
     // --------------------------------------
 
      const { logrosDesbloqueados } = await procesarEvento(
-      result.alumno.id_alumno, 
+       result.user.id_usuario,
       'registro',
       1
     );

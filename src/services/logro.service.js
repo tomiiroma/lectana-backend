@@ -159,7 +159,7 @@ export async function obtenerLogrosAlumno(usuarioId) {
  
 export async function obtenerAlumnosDelLogro(logroId) {
   
-  //alumnos que desbloquearon el logro
+  
   const { data: alumnosLogro, error } = await supabaseAdmin
     .from('alumno_has_logros')
     .select(`
@@ -172,7 +172,7 @@ export async function obtenerAlumnosDelLogro(logroId) {
       )
     `)
     .eq('logros_id_logros', logroId)
-    .order('fecha_desbloqueo', { ascending: false });
+    .order('fecha_desbloqueo', { ascending: true });
 
   if (error) {
     throw new Error(`Error al obtener alumnos del logro: ${error.message}`);
@@ -193,22 +193,34 @@ export async function obtenerAlumnosDelLogro(logroId) {
 
 
 
-// Desbloquea un logro para un alumno
-export async function desbloquearLogro(alumnoId, logroId) {
-  console.log(' alumnoId recibido:', alumnoId);
 
-  // Verificar que el alumno exista
-  const { data: alumno, error: alumnoError } = await supabaseAdmin
+
+
+ // Obtiene el id_alumno del usuario_id_usuario
+ 
+async function obtenerIdAlumnoPorUsuario(usuarioId) {
+  const { data: alumno, error } = await supabaseAdmin
     .from('alumno')
-    .select('*')
-    .eq('id_alumno', alumnoId)
+    .select('id_alumno')
+    .eq('usuario_id_usuario', usuarioId)
     .single();
 
-  if (alumnoError || !alumno) {
+  if (error || !alumno) {
     throw new Error('Alumno no encontrado');
   }
 
-  // Verificar que el logro exista
+  return alumno.id_alumno;
+}
+
+
+// Desbloquea un logro para un alumno
+export async function desbloquearLogro(usuarioId, logroId) {
+  
+  const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+
+  console.log('🔎 alumnoId obtenido:', alumnoId);
+
+
   const { data: logro, error: logroError } = await supabaseAdmin
     .from('logros')
     .select('*')
@@ -219,7 +231,7 @@ export async function desbloquearLogro(alumnoId, logroId) {
     throw new Error('Logro no encontrado');
   }
 
-  // Verificar si el logro ya fue desbloqueado
+  
   const { data: logroExistente } = await supabaseAdmin
     .from('alumno_has_logros')
     .select('*')
@@ -235,7 +247,7 @@ export async function desbloquearLogro(alumnoId, logroId) {
     };
   }
 
-  // Insertar nuevo logro desbloqueado
+  
   const { data: nuevoLogro, error: insertError } = await supabaseAdmin
     .from('alumno_has_logros')
     .insert({
@@ -260,9 +272,12 @@ export async function desbloquearLogro(alumnoId, logroId) {
 
 
 
-//  Obtiene solo los logros desbloqueados del alumno
+// logros desbloqueados del alumno
  
-export async function obtenerLogrosDesbloqueados(alumnoId) {
+export async function obtenerLogrosDesbloqueados(usuarioId) {
+  
+  const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+
   const { data, error } = await supabaseAdmin
     .from('alumno_has_logros')
     .select(`
@@ -283,15 +298,60 @@ export async function obtenerLogrosDesbloqueados(alumnoId) {
 }
 
 
-//  Obtiene estadísticas de logros del alumno
+// logros que el alumno NO ha desbloqueado
  
-export async function obtenerEstadisticasLogros(alumnoId) {
-  // Total de logros disponibles
+export async function obtenerLogrosBloqueados(usuarioId) {
+  
+  const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+
+ 
+  const { data: todosLosLogros, error: logrosError } = await supabaseAdmin
+    .from('logros')
+    .select('*')
+    .order('evento', { ascending: true })
+    .order('valor', { ascending: true });
+
+  if (logrosError) {
+    throw new Error(`Error al obtener logros: ${logrosError.message}`);
+  }
+
+  
+  const { data: logrosDesbloqueados, error: desbloqueadosError } = await supabaseAdmin
+    .from('alumno_has_logros')
+    .select('logros_id_logros')
+    .eq('alumno_id_alumno', alumnoId);
+
+  if (desbloqueadosError) {
+    throw new Error(`Error al verificar logros desbloqueados: ${desbloqueadosError.message}`);
+  }
+
+  
+  const idsDesbloqueados = new Set(
+    (logrosDesbloqueados || []).map(l => l.logros_id_logros)
+  );
+
+  
+  const logrosBloqueados = todosLosLogros.filter(
+    logro => !idsDesbloqueados.has(logro.id_logros)
+  );
+
+  return logrosBloqueados;
+}
+
+
+
+// estadísticas de logros del alumno
+ 
+export async function obtenerEstadisticasLogros(usuarioId) {
+ 
+  const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+
+  
   const { count: totalLogros } = await supabaseAdmin
     .from('logros')
     .select('*', { count: 'exact', head: true });
 
-  // Logros desbloqueados 
+
   const { data: logrosAlumno } = await supabaseAdmin
     .from('alumno_has_logros')
     .select('*')
@@ -308,5 +368,4 @@ export async function obtenerEstadisticasLogros(alumnoId) {
       : 0
   };
 }
-
  
