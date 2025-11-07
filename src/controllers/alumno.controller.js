@@ -139,20 +139,3 @@ export async function responderPreguntaController(req, res){
   }
 
 
-  export async function completarActividadController(req, res){
-
-    try{
- const {idActividad} = req.params
-    const {id_alumno, total,total_correctas, total_incorrectas,sin_corregir, estado, nota } = req.body;
-
-    const resultado_actividad = await completarActividad(idActividad,id_alumno, total,total_correctas, total_incorrectas,sin_corregir, estado, nota )
-    res.status(200).json({resultado_actividad});
-
-  }catch(error){
-      console.log("Error", error.message)
-      throw new Error(error.message)
-    }
-   
-
-
-  }

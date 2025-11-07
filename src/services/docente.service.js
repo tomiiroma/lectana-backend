@@ -207,3 +207,21 @@ export async function adminActualizarDocente(docenteId, updates) {
   // Retornar docente actualizado
   return await obtenerDocentePorId(docenteId);
 }
+
+export async function completarActividad(idActividad, idAlumno, total,total_correctas, total_incorrectas,sin_corregir, estado, nota ){
+    if(!idActividad || !idAlumno || !total || !total_correctas || !total_incorrectas || !sin_corregir || !estado || !nota){
+    throw new Error("Falta un dato");
+    }
+
+    const {data, error} = await supabaseAdmin
+    .from('resultados_actividad')
+    .insert({id_actividad: idActividad, id_alumno: idAlumno, total_preguntas: total, correctas: total_correctas,incorrectas: total_incorrectas, sin_corregir: sin_corregir, estado: estado, porcentaje: nota})
+    .select()
+
+      if (error) {
+    console.error("Error SUPABASE:", error.message);
+    throw new Error(`Error al obtener aulas: ${error.message}`);
+  }
+
+  return data;
+  }

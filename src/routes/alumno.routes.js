@@ -39,6 +39,5 @@ router.post("/responder-pregunta/:id_pregunta", requireAuth, requireRole("alumno
 
 router.get("/obtenerAula", requireAuth, requireRole("alumno"), obtenerAulasAlumnoController)
 
-router.post("/completarActividad/:idActividad", requireAuth, completarActividadController)
 
 export default router;
