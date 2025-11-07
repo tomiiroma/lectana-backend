@@ -8,7 +8,7 @@ import {
   adminActualizarAlumnoController,
   responderPreguntaController,
   obtenerAulasAlumnoController,
-  completarActividadController
+  
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 import { completarActividad } from '../services/alumno.service.js';
