@@ -4,7 +4,6 @@ import {
   obtenerItemPorId, 
   obtenerItems,
   obtenerItemsPorCategoria,
-  obtenerItemsPorTipo,
   actualizarItem, 
   eliminarItem,
   desbloquearItem,
@@ -12,60 +11,92 @@ import {
   verificarItemDesbloqueado,
   obtenerEstadisticasItems
 } from '../services/item.service.js';
-import { subirImagen, eliminarImagen } from '../services/imagen.service.js';
-import { actualizarItemSchemam, crearItemSchema, idSchema, categoriaSchema, tipoSchema } from '../schemas/itemSchema.js';
+import { subirImagenItem, eliminarImagenItem } from '../services/item.imagen.service.js'
+import { actualizarItemSchema, crearItemSchema, idSchema, categoriaSchema, tipoSchema } from '../schemas/itemSchema.js';
+
 
 
 export async function crearItemController(req, res, next) {
   try {
-    const data = crearItemSchema.parse(req.body);
-    const result = await crearItem(data);
-    res.status(201).json({ ok: true, data: result });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
-    }
-    next(error);
-  }
-}
-
-export async function crearItemConImagenController(req, res, next) {
-  try {
+    
     if (!req.file) {
       return res.status(400).json({ 
         ok: false, 
-        error: 'Se requiere una imagen para crear el item' 
+        error: 'La imagen es obligatoria para crear un item' 
       });
     }
 
-    // Subir imagen primero
-    const imagenResultado = await subirImagen(req.file, 'items');
     
-    // Crear item con la URL de la imagen
-    const data = crearItemSchema.parse({
-      ...req.body,
-      url_imagen: imagenResultado.url_publica
+    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!tiposPermitidos.includes(req.file.mimetype)) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Solo se aceptan imágenes JPG, PNG, WebP o GIF' 
+      });
+    }
+
+ 
+    if (req.file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'La imagen es demasiado grande. Máximo 5MB' 
+      });
+    }
+
+    
+    const dataValidada = crearItemSchema.parse(req.body);
+    
+  
+    const result = await crearItem({
+      ...dataValidada,
+      url_imagen: null 
     });
     
-    const result = await crearItem(data);
+    console.log('Item creado con ID:', result.id_item);
     
-    res.status(201).json({ 
-      ok: true, 
-      data: {
-        ...result,
-        imagen_info: {
-          nombre_archivo: imagenResultado.nombre_archivo,
-          ruta: imagenResultado.ruta,
-          tamaño: imagenResultado.tamaño
-        }
-      },
-      message: 'Item creado con imagen exitosamente'
-    });
+    
+    try {
+      const { url: urlImagen } = await subirImagenItem(
+        result.id_item, 
+        req.file.buffer, 
+        req.file.originalname
+      );
+      
+      console.log('Imagen subida:', urlImagen);
+      
+    
+      const itemActualizado = await actualizarItem(result.id_item, {
+        url_imagen: urlImagen
+      });
+      
+      console.log('Item actualizado con imagen');
+      
+      res.status(201).json({ 
+        ok: true, 
+        data: itemActualizado,
+        message: 'Item creado exitosamente con imagen' 
+      });
+    } catch (imageError) {
+     
+      console.error('Error al subir imagen, eliminando item...');
+      await eliminarItem(result.id_item);
+      throw new Error(`Error al procesar imagen: ${imageError.message}`);
+    }
+    
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+      console.error('Error de validación:', error.errors);
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Validación fallida', 
+        detalles: error.errors
+      });
     }
-    next(error);
+    console.error('Error en crearItemController:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message || 'Error interno del servidor'
+    });
   }
 }
 
@@ -107,18 +138,6 @@ export async function listarItemsPorCategoriaController(req, res, next) {
   }
 }
 
-export async function listarItemsPorTipoController(req, res, next) {
-  try {
-    const { tipo } = tipoSchema.parse(req.params);
-    const result = await obtenerItemsPorTipo(tipo);
-    res.json({ ok: true, data: result });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
-    }
-    next(error);
-  }
-}
 
 export async function actualizarItemController(req, res, next) {
   try {

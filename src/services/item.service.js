@@ -7,8 +7,7 @@ export async function obtenerItems() {
   const { data, error } = await supabaseAdmin
     .from('item')
     .select('*')
-    .eq('activo', true)
-    .order('precio_puntos', { ascending: true });
+    .order('nombre', { ascending: true });
 
   if (error) throw new Error(error.message);
   return data;
@@ -29,20 +28,6 @@ export async function obtenerItemsPorCategoria(categoria) {
   return data;
 }
 
-/**
- * Obtener items por tipo
- */
-export async function obtenerItemsPorTipo(tipo) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .select('*')
-    .eq('tipo', tipo)
-    .eq('activo', true)
-    .order('precio_puntos', { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data;
-}
 
 /**
  * Obtener un item específico por ID
