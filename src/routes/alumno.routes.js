@@ -7,9 +7,11 @@ import {
   obtenerAlumnoPorIdController,
   adminActualizarAlumnoController,
   responderPreguntaController,
-  obtenerAulasAlumnoController
+  obtenerAulasAlumnoController,
+  completarActividadController
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
+import { completarActividad } from '../services/alumno.service.js';
 
 const router = Router();
 
@@ -36,4 +38,7 @@ router.put('/admin-actualizar-alumno/:id', requireAuth, requireRole('administrad
 router.post("/responder-pregunta/:id_pregunta", requireAuth, requireRole("alumno"), responderPreguntaController)
 
 router.get("/obtenerAula", requireAuth, requireRole("alumno"), obtenerAulasAlumnoController)
+
+router.post("/completarActividad/:idActividad", requireAuth, completarActividadController)
+
 export default router;
