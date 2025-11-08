@@ -26,7 +26,6 @@ export async function crearItemController(req, res, next) {
       });
     }
 
-    
     const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!tiposPermitidos.includes(req.file.mimetype)) {
       return res.status(400).json({ 
@@ -35,7 +34,6 @@ export async function crearItemController(req, res, next) {
       });
     }
 
- 
     if (req.file.size > 5 * 1024 * 1024) {
       return res.status(400).json({ 
         ok: false, 
@@ -43,29 +41,32 @@ export async function crearItemController(req, res, next) {
       });
     }
 
-    
     const dataValidada = crearItemSchema.parse(req.body);
     
-  
     const result = await crearItem({
       ...dataValidada,
       url_imagen: null 
     });
     
-    console.log('Item creado con ID:', result.id_item);
+    if (!result.ok) {
+      return res.status(400).json({
+        ok: false,
+        error: result.error
+      });
+    }
     
+    console.log('Item creado con ID:', result.data.id_item);
     
     try {
       const { url: urlImagen } = await subirImagenItem(
-        result.id_item, 
+        result.data.id_item, 
         req.file.buffer, 
         req.file.originalname
       );
       
       console.log('Imagen subida:', urlImagen);
       
-    
-      const itemActualizado = await actualizarItem(result.id_item, {
+      const itemActualizado = await actualizarItem(result.data.id_item, {
         url_imagen: urlImagen
       });
       
@@ -77,9 +78,8 @@ export async function crearItemController(req, res, next) {
         message: 'Item creado exitosamente con imagen' 
       });
     } catch (imageError) {
-     
-      console.error('Error al subir imagen, eliminando item...');
-      await eliminarItem(result.id_item);
+      console.error('Error al subir imagen, eliminando item físicamente...');
+      await eliminarItemMalCreado(result.data.id_item);
       throw new Error(`Error al procesar imagen: ${imageError.message}`);
     }
     
@@ -153,7 +153,10 @@ export async function actualizarItemController(req, res, next) {
   }
 }
 
-export async function eliminarItemController(req, res, next) {
+
+//Deshabilitar item
+
+export async function deshabilitarItemController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
     const result = await eliminarItem(id);
@@ -162,6 +165,29 @@ export async function eliminarItemController(req, res, next) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
     }
+    next(error);
+  }
+}
+
+// reactivar item
+export async function reactivarItemController(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await reactivarItem(id);
+    
+    if (!result.ok) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: result.error 
+      });
+    }
+    
+    res.json({ 
+      ok: true, 
+      message: result.data.message,
+      data: result.data 
+    });
+  } catch (error) {
     next(error);
   }
 }

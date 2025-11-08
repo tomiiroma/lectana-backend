@@ -4,7 +4,9 @@ import {
   crearItemController,
   actualizarItemController,
   listarItemsController,
-  obtenerItemController
+  obtenerItemController,
+  reactivarItemController,
+  deshabilitarItemController
 } from '../controllers/item.controller.js';
 
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
@@ -28,6 +30,7 @@ router.post('/', requireAuth, requireRole('administrador'), upload.single('image
 router.put('/:id', requireAuth, requireRole('administrador'), upload.single('imagen'), actualizarItemController);
 router.get('/',  requireAuth, requireRole('administrador'), listarItemsController);
 router.get('/:id',  requireAuth, requireRole('administrador'), obtenerItemController);
-
+router.delete('/:id', requireAuth, requireRole('administrador'), deshabilitarItemController);
+router.patch('/:id/reactivar', requireAuth, requireRole('administrador'),reactivarItemController);
 
 export default router;
