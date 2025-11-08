@@ -6,6 +6,7 @@ import {
   obtenerItemsPorCategoria,
   actualizarItem, 
   eliminarItem,
+  reactivarItem,
   desbloquearItem,
   obtenerItemsDesbloqueados,
   verificarItemDesbloqueado,
@@ -158,9 +159,22 @@ export async function actualizarItemController(req, res, next) {
 
 export async function deshabilitarItemController(req, res, next) {
   try {
-    const { id } = idSchema.parse(req.params);
+    const { id } = req.params;
     const result = await eliminarItem(id);
-    res.json({ ok: true, data: result });
+
+    if (!result.ok) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: result.error 
+      });
+    }
+
+    res.json({ 
+      ok: true, 
+      message: result.data.message,
+      data: result.data.item
+    });
+
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
@@ -243,3 +257,6 @@ export async function obtenerEstadisticasItemsController(req, res, next) {
     next(error);
   }
 }
+
+
+// Android 

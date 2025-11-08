@@ -109,16 +109,9 @@ export async function actualizarItem(id, { nombre, descripcion, precio_puntos, t
 export async function eliminarItem(id) {
   try {
     
-    const validacion = idSchema.safeParse({ id });
-    if (!validacion.success) {
-      return {
-        ok: false,
-        error: 'ID inválido'
-      };
-    }
 
-    
-    const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin
+
+      const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin
       .from('item')
       .select('id_item, nombre, disponible')
       .eq('id_item', id)
@@ -138,19 +131,8 @@ export async function eliminarItem(id) {
         error: 'El item ya está deshabilitado' 
       };
     }
-
-    
-    const { count: totalCompras, error: errorCompras } = await supabaseAdmin
-      .from('alumno_item')
-      .select('*', { count: 'exact', head: true })
-      .eq('id_item', id);
-
-    if (errorCompras) {
-      console.error('Error al verificar compras:', errorCompras);
-    }
-
   
-    const { data: itemActualizado, error: errorActualizacion } = await supabaseAdmin
+   const { data: itemActualizado, error: errorActualizacion } = await supabaseAdmin
       .from('item')
       .update({ disponible: false })
       .eq('id_item', id)
@@ -158,6 +140,7 @@ export async function eliminarItem(id) {
       .single();
 
     if (errorActualizacion) {
+      console.error('Error de Supabase:', errorActualizacion);
       return { 
         ok: false, 
         error: 'Error al deshabilitar el item' 
@@ -168,10 +151,7 @@ export async function eliminarItem(id) {
       ok: true, 
       data: {
         item: itemActualizado,
-        compras: totalCompras || 0,
-        message: totalCompras > 0 
-          ? `Item deshabilitado. ${totalCompras} alumnos ya lo compraron pero seguirán teniéndolo.`
-          : 'Item deshabilitado exitosamente.'
+        message: 'Item deshabilitado exitosamente.'
       }
     };
 
@@ -190,14 +170,6 @@ export async function eliminarItem(id) {
  
 export async function reactivarItem(id) {
   try {
-    
-    const validacion = idSchema.safeParse({ id });
-    if (!validacion.success) {
-      return {
-        ok: false,
-        error: 'ID inválido'
-      };
-    }
 
    
     const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin

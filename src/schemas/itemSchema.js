@@ -12,13 +12,16 @@ export const crearItemSchema = z.object({
       return Boolean(val);
     },
     z.boolean()
-  ).default(true)
+  ).default(true),
+  precio: z.coerce.number().int().positive('El precio debe ser un número positivo mayor a 0')
 });
+
 
 export const actualizarItemSchema = crearItemSchema.partial();
 
+
 export const idSchema = z.object({
-  id: z.string().uuid(),
+  id: z.coerce.number().int().positive(),
 });
 
 export const categoriaSchema = z.object({
