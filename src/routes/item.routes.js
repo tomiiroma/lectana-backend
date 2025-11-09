@@ -6,7 +6,9 @@ import {
   listarItemsController,
   obtenerItemController,
   reactivarItemController,
-  deshabilitarItemController
+  deshabilitarItemController,
+  obtenerItemsDisponiblesController,
+  obtenerItemsCompradosController
 } from '../controllers/item.controller.js';
 
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
@@ -25,6 +27,18 @@ router.use((req, res, next) => {
   if (limiter) return limiter(req, res, next);
   next();
 });
+
+// Alumno android
+
+
+// Items disponibles en la tienda
+router.get('/disponibles', requireAuth, requireRole('alumno'), obtenerItemsDisponiblesController);
+
+// items del alumno
+router.get('/mis-items', requireAuth, requireRole('alumno'), obtenerItemsCompradosController);
+
+
+// Admin
 
 router.post('/', requireAuth, requireRole('administrador'), upload.single('imagen'), crearItemController);
 router.put('/:id', requireAuth, requireRole('administrador'), upload.single('imagen'), actualizarItemController);

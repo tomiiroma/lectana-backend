@@ -1,5 +1,22 @@
 import { supabaseAdmin } from '../config/supabase.js';
 
+
+  // Obtener id_alumno desde id_usuario
+ 
+async function obtenerIdAlumnoPorUsuario(usuarioId) {
+    const { data: alumno, error } = await supabaseAdmin
+    .from('alumno')
+    .select('id_alumno')
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+
+  if (error || !alumno) {
+    throw new Error('Alumno no encontrado');
+  }
+
+  return alumno.id_alumno;
+}
+
 /**
  * Obtener todos los items disponibles (imágenes desbloqueables)
  */
@@ -8,21 +25,6 @@ export async function obtenerItems() {
     .from('item')
     .select('*')
     .order('nombre', { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-/**
- * Obtener items por categoría
- */
-export async function obtenerItemsPorCategoria(categoria) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .select('*')
-    .eq('categoria', categoria)
-    .eq('disponible', true)
-    .order('precio_puntos', { ascending: true });
 
   if (error) throw new Error(error.message);
   return data;
@@ -365,6 +367,112 @@ export async function eliminarItemMalCreado(id) {
     return {
       ok: false,
       error: 'Error inesperado al eliminar el item'
+    };
+  }
+}
+
+
+// Android
+
+// Muestra los items disponibles para la tienda (Los items que compro el alumno ya no se muestran en la tienda.).
+
+ 
+export async function obtenerItemsDisponiblesParaAlumno(usuarioId) {
+  try {
+    
+    const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+    console.log(`Usuario ID: ${usuarioId} → Alumno ID: ${alumnoId}`);
+
+    const { data: itemsDisponibles, error: errorItems } = await supabaseAdmin
+      .from('item')
+      .select('*')
+      .eq('disponible', true)
+      .order('precio', { ascending: true });
+
+    if (errorItems) {
+      return {
+        ok: false,
+        error: errorItems.message || 'Error al obtener items disponibles'
+      };
+    }
+
+    const { data: itemsComprados, error: errorComprados } = await supabaseAdmin
+      .from('alumno_has_item')
+      .select('item_id_item')
+      .eq('alumno_id_alumno', alumnoId);
+
+    if (errorComprados) {
+      return {
+        ok: false,
+        error: errorComprados.message || 'Error al verificar items comprados'
+      };
+    }
+
+    const idsComprados = itemsComprados.map(c => c.item_id_item);
+    const itemsNoComprados = itemsDisponibles.filter(
+      item => !idsComprados.includes(item.id_item)
+    );
+
+    return {
+      ok: true,
+      data: itemsNoComprados || []
+    };
+  } catch (error) {
+    console.error('Error al obtener items disponibles para alumno:', error);
+    return {
+      ok: false,
+      error: error.message || 'Error inesperado al obtener items disponibles'
+    };
+  }
+}
+
+// Muestra los items que el alumno compro
+
+export async function obtenerItemsCompradosPorAlumno(usuarioId) {
+  try {
+    
+    const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+    console.log(`Usuario ID: ${usuarioId} → Alumno ID: ${alumnoId}`);
+
+    const { data, error } = await supabaseAdmin
+      .from('alumno_has_item')
+      .select(`
+        movimiento,
+        fecha_canje,
+        item:item_id_item (
+          id_item,
+          nombre,
+          descripcion,
+          precio,
+          url_imagen,
+          disponible
+        )
+      `)
+      .eq('alumno_id_alumno', alumnoId)
+      .order('fecha_canje', { ascending: false });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message || 'Error al obtener items comprados'
+      };
+    }
+
+    const itemsComprados = data.map(compra => ({
+      ...compra.item,
+      movimiento: compra.movimiento,
+      fecha_compra: compra.fecha_canje
+    }));
+
+    return {
+      ok: true,
+      data: itemsComprados || []
+    };
+  } catch (error) {
+    console.error('Error al obtener items comprados:', error);
+    return {
+      ok: false,
+      error: error.message || 'Error inesperado al obtener items comprados'
     };
   }
 }

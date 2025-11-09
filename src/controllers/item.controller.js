@@ -3,18 +3,18 @@ import {
   crearItem, 
   obtenerItemPorId, 
   obtenerItems,
-  obtenerItemsPorCategoria,
   actualizarItem, 
   eliminarItem,
   reactivarItem,
   desbloquearItem,
   obtenerItemsDesbloqueados,
   verificarItemDesbloqueado,
-  obtenerEstadisticasItems
+  obtenerEstadisticasItems,
+   obtenerItemsDisponiblesParaAlumno, 
+  obtenerItemsCompradosPorAlumno
 } from '../services/item.service.js';
 import { subirImagenItem, eliminarImagenItem } from '../services/item.imagen.service.js'
 import { actualizarItemSchema, crearItemSchema, idSchema, categoriaSchema, tipoSchema } from '../schemas/itemSchema.js';
-
 
 
 export async function crearItemController(req, res, next) {
@@ -126,18 +126,7 @@ export async function listarItemsController(req, res, next) {
   }
 }
 
-export async function listarItemsPorCategoriaController(req, res, next) {
-  try {
-    const { categoria } = categoriaSchema.parse(req.params);
-    const result = await obtenerItemsPorCategoria(categoria);
-    res.json({ ok: true, data: result });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
-    }
-    next(error);
-  }
-}
+
 
 
 export async function actualizarItemController(req, res, next) {
@@ -260,3 +249,54 @@ export async function obtenerEstadisticasItemsController(req, res, next) {
 
 
 // Android 
+
+// Mostar items que no han sido comprados y estan disponibles. 
+
+export async function obtenerItemsDisponiblesController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub; 
+    
+    const result = await obtenerItemsDisponiblesParaAlumno(usuarioId); 
+    
+    if (!result.ok) {
+      return res.status(400).json({
+        ok: false,
+        error: result.error
+      });
+    }
+    
+    res.json({
+      ok: true,
+      data: result.data,
+      total: result.data.length
+    });
+  } catch (error) {
+    console.error('Error en obtenerItemsDisponiblesController:', error);
+    next(error);
+  }
+}
+
+// Mostrar items del alumno.
+export async function obtenerItemsCompradosController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub; 
+    
+    const result = await obtenerItemsCompradosPorAlumno(usuarioId); 
+    
+    if (!result.ok) {
+      return res.status(400).json({
+        ok: false,
+        error: result.error
+      });
+    }
+    
+    res.json({
+      ok: true,
+      data: result.data,
+      total: result.data.length
+    });
+  } catch (error) {
+    console.error('Error en obtenerItemsCompradosController:', error);
+    next(error);
+  }
+}
