@@ -296,3 +296,47 @@ export async function unirseAula(usuarioId, codigoAcceso) {
   };
 }
 
+// Salir de un aula
+export async function salirAula(usuarioId) {
+  // 1. Obtener ID del alumno
+  const { data: alumno, error: alumnoError } = await supabaseAdmin
+    .from('alumno')
+    .select('id_alumno')
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+  
+  if (alumnoError || !alumno) {
+    throw new Error('Alumno no encontrado');
+  }
+  
+  // 2. Verificar que el alumno está en un aula
+  const { data: asignacion, error: asignacionError } = await supabaseAdmin
+    .from('alumno_has_aula')
+    .select('aula_id_aula, aula:aula_id_aula(nombre_aula)')
+    .eq('alumno_id_alumno', alumno.id_alumno)
+    .maybeSingle();
+  
+  if (asignacionError) {
+    throw new Error('Error al verificar asignación del alumno: ' + asignacionError.message);
+  }
+  
+  if (!asignacion) {
+    throw new Error('No estás asignado a ningún aula');
+  }
+  
+  // 3. Eliminar asignación del alumno
+  const { error: deleteError } = await supabaseAdmin
+    .from('alumno_has_aula')
+    .delete()
+    .eq('alumno_id_alumno', alumno.id_alumno);
+  
+  if (deleteError) {
+    throw new Error('Error al salir del aula: ' + deleteError.message);
+  }
+  
+  return {
+    mensaje: `Has salido de ${asignacion.aula.nombre_aula}`,
+    aula: asignacion.aula
+  };
+}
+

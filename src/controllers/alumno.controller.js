@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, unirseAula } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, unirseAula, salirAula } from '../services/alumno.service.js';
 import { crearAlumnoSchema, listarSchema, actualizarPerfilSchema,adminActualizarAlumnoSchema } from '../schemas/alumnoSchema.js';
 import { idSchema } from "../schemas/idSchema.js";
 
@@ -146,6 +146,22 @@ export async function unirseAulaController(req, res, next) {
     }
     if (errorMsg.includes('límite') || errorMsg.includes('llena')) {
       return res.status(400).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
+
+// Controlador para salir de un aula
+export async function salirAulaController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub; // Del JWT
+    
+    const result = await salirAula(usuarioId);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    const errorMsg = String(error.message).toLowerCase();
+    if (errorMsg.includes('no encontrado') || errorMsg.includes('no estás asignado')) {
+      return res.status(404).json({ ok: false, error: error.message });
     }
     next(error);
   }
