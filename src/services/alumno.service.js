@@ -242,3 +242,57 @@ export async function responderPregunta(respuesta, id_pregunta, id_alumno){
     return data;
 }
 
+// Unirse a un aula usando código de acceso
+export async function unirseAula(usuarioId, codigoAcceso) {
+  // 1. Buscar aula por código
+  const { data: aula, error: aulaError } = await supabaseAdmin
+    .from('aula')
+    .select('id_aula, nombre_aula, grado, codigo_acceso')
+    .eq('codigo_acceso', codigoAcceso)
+    .single();
+  
+  if (aulaError || !aula) {
+    throw new Error('Código de aula no encontrado');
+  }
+  
+  // 2. Verificar capacidad (usando función existente)
+  const hayEspacio = await verificarCapacidadAula(aula.id_aula);
+  if (!hayEspacio) {
+    throw new Error('El aula ha alcanzado el límite máximo de 50 estudiantes');
+  }
+  
+  // 3. Obtener ID del alumno
+  const { data: alumno, error: alumnoError } = await supabaseAdmin
+    .from('alumno')
+    .select('id_alumno')
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+  
+  if (alumnoError || !alumno) {
+    throw new Error('Alumno no encontrado');
+  }
+  
+  // 4. Eliminar asignación anterior del alumno (si existe)
+  await supabaseAdmin
+    .from('alumno_has_aula')
+    .delete()
+    .eq('alumno_id_alumno', alumno.id_alumno);
+  
+  // 5. Crear nueva asignación
+  const { error: relacionError } = await supabaseAdmin
+    .from('alumno_has_aula')
+    .insert({
+      alumno_id_alumno: alumno.id_alumno,
+      aula_id_aula: aula.id_aula
+    });
+  
+  if (relacionError) {
+    throw new Error('Error al asignar alumno al aula: ' + relacionError.message);
+  }
+  
+  return {
+    mensaje: `Te has unido a ${aula.nombre_aula}`,
+    aula: aula
+  };
+}
+

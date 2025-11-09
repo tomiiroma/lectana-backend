@@ -6,7 +6,8 @@ import {
   actualizarPerfilAlumnoController,
   obtenerAlumnoPorIdController,
   adminActualizarAlumnoController,
-  responderPreguntaController
+  responderPreguntaController,
+  unirseAulaController
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -33,4 +34,8 @@ router.put('/admin-actualizar-alumno/:id', requireAuth, requireRole('administrad
 
 
 router.post("/responder-pregunta/:id_pregunta", requireAuth, requireRole("alumno"), responderPreguntaController)
+
+// Unirse a un aula mediante código de acceso
+router.post('/unirse-aula', requireAuth, requireRole('alumno'), unirseAulaController);
+
 export default router;
