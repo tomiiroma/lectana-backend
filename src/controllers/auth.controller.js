@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { login, registerAlumno, registerDocente, registerAdministrador, getMe } from '../services/auth.service.js';
 import cookieParser from 'cookie-parser';
 import { loginSchema,registerAlumnoSchema,registerDocenteSchema,registerAdministradorSchema } from '../schemas/authSchema.js';
+import { procesarEvento } from '../services/logro.eventos.service.js';
 
 export async function loginController(req, res, next) {
   try {
@@ -43,7 +44,27 @@ export async function registerAlumnoController(req, res, next) {
   try {
     const data = registerAlumnoSchema.parse(req.body);
     const result = await registerAlumno(data);
-    res.status(201).json({ ok: true, ...result });
+
+    // --------------------------------------
+
+     const { logrosDesbloqueados } = await procesarEvento(
+       result.user.id_usuario,
+      'registro',
+      1
+    );
+
+
+   // res.status(201).json({ ok: true, ...result });
+
+   res.status(201).json({
+      ok: true,
+      ...result, 
+      logrosDesbloqueados,
+     message: logrosDesbloqueados.length > 0
+    ? `Desbloqueaste el logro: ${logrosDesbloqueados[0].nombre}`
+    : '¡Bienvenido!'
+});
+
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });

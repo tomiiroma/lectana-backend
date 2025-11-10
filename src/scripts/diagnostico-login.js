@@ -61,9 +61,3 @@ console.log('   - Comparte los logs del servidor cuando intentas hacer login');
 console.log('   - Verifica que las variables de entorno estén configuradas');
 console.log('   - Confirma que el usuario existe en Supabase Dashboard');
 
-
-
-
-
-
-

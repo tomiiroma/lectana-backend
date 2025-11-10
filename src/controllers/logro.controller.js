@@ -10,13 +10,12 @@ import {
   obtenerAlumnosDelLogro,
   // Alumno 
   desbloquearLogro,
-  actualizarProgresoLogro,
-  obtenerLogrosConProgreso,
   obtenerLogrosDesbloqueados,
+  obtenerLogrosBloqueados,
   obtenerEstadisticasLogros
 } from '../services/logro.service.js';
 import { subirImagenLogro, eliminarImagenLogro } from '../services/logro.imagen.service.js';
-import { crearLogroSchema, actualizarLogroSchema, idSchema, desbloquearLogroSchema, actualizarProgresoSchema } from '../schemas/logroSchema.js';
+import { crearLogroSchema, actualizarLogroSchema, idSchema, desbloquearLogroSchema} from '../schemas/logroSchema.js';
 
 
 export async function crearLogroController(req, res, next) {
@@ -30,11 +29,11 @@ export async function crearLogroController(req, res, next) {
     }
 
 
-    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!tiposPermitidos.includes(req.file.mimetype)) {
       return res.status(400).json({ 
         ok: false, 
-        error: 'Solo se aceptan imágenes JPG, PNG, GIF o WebP' 
+        error: 'Solo se aceptan imágenes JPG, PNG o WebP' 
       });
     }
 
@@ -320,24 +319,24 @@ export async function obtenerAlumnosLogroController(req, res, next) {
 
 
  
- // Desbloquea un logro para el alumno autenticado
+ // Desbloquea un logro para el alumno 
  
 export async function desbloquearLogroController(req, res, next) {
   try {
-    // Validar datos de entrada
+   
     const { logro_id } = desbloquearLogroSchema.parse(req.body);
 
-    console.log('🔍 req.user:', req.user);
-    console.log('🔍 req.user.sub:', req.user.sub);
+    console.log(' req.user:', req.user);
+    console.log(' req.user.sub:', req.user.sub);
     
-    // Obtener ID del alumno del token JWT (req.user.sub)
+    
     const alumnoId = req.user.sub;
   
 
-    // Desbloquear el logro
+    
     const result = await desbloquearLogro(alumnoId, logro_id);
 
-    // Respuesta diferente según si ya estaba desbloqueado o no
+    
     const statusCode = result.yaDesbloqueado ? 200 : 201;
     const message = result.yaDesbloqueado 
       ? 'El logro ya estaba desbloqueado' 
@@ -368,51 +367,12 @@ export async function desbloquearLogroController(req, res, next) {
 
 
 
- // Actualiza el progreso de un logro (0-100)
+ // Obtiene solo los logros desbloqueados del alumno
  
-export async function actualizarProgresoLogroController(req, res, next) {
-  try {
-    const { logro_id, progreso } = actualizarProgresoSchema.parse(req.body);
-    const alumnoId = req.user.sub;
-
-    const result = await actualizarProgresoLogro(alumnoId, logro_id, progreso);
-
-    // Si se acaba de desbloquear, mensaje
-    const message = result.recienDesbloqueado 
-      ? '¡Logro desbloqueado!' 
-      : 'Progreso actualizado';
-
-    res.json({
-      ok: true,
-      data: result,
-      message
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        ok: false,
-        error: 'Validación fallida',
-        detalles: error.errors
-      });
-    }
-    if (error.message.includes('no encontrado')) {
-      return res.status(404).json({
-        ok: false,
-        error: error.message
-      });
-    }
-    next(error);
-  }
-}
-
-
-
- // Obtiene todos los logros con el progreso del alumno
- 
-export async function obtenerLogrosDisponiblesController(req, res, next) {
+export async function obtenerMisLogrosController(req, res, next) {
   try {
     const alumnoId = req.user.sub;
-    const logros = await obtenerLogrosConProgreso(alumnoId);
+    const logros = await obtenerLogrosDesbloqueados(alumnoId);
 
     res.json({
       ok: true,
@@ -424,14 +384,12 @@ export async function obtenerLogrosDisponiblesController(req, res, next) {
   }
 }
 
-
-
- // Obtiene solo los logros desbloqueados del alumno
+ // Obtiene solo los logros que el alumno NO ha desbloqueado
  
-export async function obtenerMisLogrosController(req, res, next) {
+export async function obtenerLogrosBloqueadosController(req, res, next) {
   try {
     const alumnoId = req.user.sub;
-    const logros = await obtenerLogrosDesbloqueados(alumnoId);
+    const logros = await obtenerLogrosBloqueados(alumnoId);
 
     res.json({
       ok: true,

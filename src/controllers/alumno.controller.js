@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, obtenerAulasAlumno } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, obtenerAulasAlumno, unirseAula, salirAula } from '../services/alumno.service.js';
 import { crearAlumnoSchema, listarSchema, actualizarPerfilSchema,adminActualizarAlumnoSchema } from '../schemas/alumnoSchema.js';
 import { idSchema } from "../schemas/idSchema.js";
 
@@ -124,18 +124,58 @@ export async function responderPreguntaController(req, res){
 
 }
 
-  export async function obtenerAulasAlumnoController(req,res){
-    try{
-      const id_usuario = req.user.sub
+export async function obtenerAulasAlumnoController(req,res){
+  try{
+    const id_usuario = req.user.sub
 
+    const aulasAlumno = await obtenerAulasAlumno(id_usuario)
 
-      const aulasAlumno = await obtenerAulasAlumno(id_usuario)
-
-      res.status(200).json({aulasAlumno});
-    }catch(error){
-      console.log("Error", error.message)
-      throw new Error(error.message)
-    }
+    res.status(200).json({aulasAlumno});
+  }catch(error){
+    console.log("Error", error.message)
+    throw new Error(error.message)
   }
+}
 
+// Controlador para unirse a un aula usando código de acceso
+export async function unirseAulaController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub; // Del JWT
+    const { codigo_acceso } = req.body;
+    
+    if (!codigo_acceso) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'El código de acceso es requerido' 
+      });
+    }
+    
+    const result = await unirseAula(usuarioId, codigo_acceso);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    const errorMsg = String(error.message).toLowerCase();
+    if (errorMsg.includes('no encontrado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    if (errorMsg.includes('límite') || errorMsg.includes('llena')) {
+      return res.status(400).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}
 
+// Controlador para salir de un aula
+export async function salirAulaController(req, res, next) {
+  try {
+    const usuarioId = req.user.sub; // Del JWT
+    
+    const result = await salirAula(usuarioId);
+    res.json({ ok: true, data: result });
+  } catch (error) {
+    const errorMsg = String(error.message).toLowerCase();
+    if (errorMsg.includes('no encontrado') || errorMsg.includes('no estás asignado')) {
+      return res.status(404).json({ ok: false, error: error.message });
+    }
+    next(error);
+  }
+}

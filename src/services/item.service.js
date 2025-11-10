@@ -1,5 +1,22 @@
 import { supabaseAdmin } from '../config/supabase.js';
 
+
+  // Obtener id_alumno desde id_usuario
+ 
+async function obtenerIdAlumnoPorUsuario(usuarioId) {
+    const { data: alumno, error } = await supabaseAdmin
+    .from('alumno')
+    .select('id_alumno')
+    .eq('usuario_id_usuario', usuarioId)
+    .single();
+
+  if (error || !alumno) {
+    throw new Error('Alumno no encontrado');
+  }
+
+  return alumno.id_alumno;
+}
+
 /**
  * Obtener todos los items disponibles (imágenes desbloqueables)
  */
@@ -7,42 +24,12 @@ export async function obtenerItems() {
   const { data, error } = await supabaseAdmin
     .from('item')
     .select('*')
-    .eq('activo', true)
-    .order('precio_puntos', { ascending: true });
+    .order('nombre', { ascending: true });
 
   if (error) throw new Error(error.message);
   return data;
 }
 
-/**
- * Obtener items por categoría
- */
-export async function obtenerItemsPorCategoria(categoria) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .select('*')
-    .eq('categoria', categoria)
-    .eq('activo', true)
-    .order('precio_puntos', { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-/**
- * Obtener items por tipo
- */
-export async function obtenerItemsPorTipo(tipo) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .select('*')
-    .eq('tipo', tipo)
-    .eq('activo', true)
-    .order('precio_puntos', { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data;
-}
 
 /**
  * Obtener un item específico por ID
@@ -58,65 +45,225 @@ export async function obtenerItemPorId(id) {
   return data;
 }
 
-/**
- * Crear un nuevo item (imagen desbloqueable)
- */
-export async function crearItem({ nombre, descripcion, precio_puntos, tipo, categoria, url_imagen, activo = true }) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .insert([{
-      nombre,
-      descripcion,
-      precio_puntos,
-      tipo,
-      categoria,
-      url_imagen,
-      activo
-    }])
-    .select()
-    .single();
 
-  if (error) throw new Error(error.message);
-  return data;
+ // Crear un nuevo item (imagen desbloqueable)
+ 
+export async function crearItem({ nombre, descripcion, precio, url_imagen, disponible = true }) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('item')
+      .insert([{
+        nombre,
+        descripcion,
+        disponible,
+        precio,
+        url_imagen
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message || 'Error al crear el item'
+      };
+    }
+
+    return {
+      ok: true,
+      data: data
+    };
+  } catch (error) {
+    console.error('Error al crear item:', error);
+    return {
+      ok: false,
+      error: 'Error inesperado al crear el item'
+    };
+  }
 }
 
-/**
- * Actualizar un item existente
- */
-export async function actualizarItem(id, { nombre, descripcion, precio_puntos, tipo, categoria, url_imagen, activo }) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .update({
-      nombre,
-      descripcion,
-      precio_puntos,
-      tipo,
-      categoria,
-      url_imagen,
-      activo
-    })
-    .eq('id_item', id)
-    .select()
-    .single();
+// Actualizar item
 
-  if (error) throw new Error(error.message);
-  return data;
+export async function actualizarItem(id, data) {
+  try {
+    
+    const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin
+      .from('item')
+      .select('*')
+      .eq('id_item', id)
+      .single();
+
+    if (errorBusqueda || !itemExistente) {
+      return {
+        ok: false,
+        error: 'Item no encontrado'
+      };
+    }
+
+    
+    if (data.precio !== undefined) {
+      const precio = Number(data.precio);
+      if (isNaN(precio) || precio < 1) {
+        return {
+          ok: false,
+          error: 'El precio debe ser un número mayor o igual a 1'
+        };
+      }
+      data.precio = precio;
+    }
+
+ 
+    const { data: itemActualizado, error: errorActualizacion } = await supabaseAdmin
+      .from('item')
+      .update(data)
+      .eq('id_item', id)
+      .select()
+      .single();
+
+    if (errorActualizacion) {
+      console.error('Error al actualizar item:', errorActualizacion);
+      return {
+        ok: false,
+        error: 'Error al actualizar el item'
+      };
+    }
+
+    return {
+      ok: true,
+      data: itemActualizado
+    };
+  } catch (error) {
+    console.error('Error inesperado al actualizar item:', error);
+    return {
+      ok: false,
+      error: 'Error inesperado al actualizar el item'
+    };
+  }
 }
 
-/**
- * Eliminar un item (soft delete)
- */
+ // Eliminar un item 
+ 
 export async function eliminarItem(id) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .update({ activo: false })
-    .eq('id_item', id)
-    .select()
-    .single();
+  try {
+    
 
-  if (error) throw new Error(error.message);
-  return data;
+
+      const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin
+      .from('item')
+      .select('id_item, nombre, disponible')
+      .eq('id_item', id)
+      .single();
+
+    if (errorBusqueda) {
+      return { 
+        ok: false, 
+        error: 'Item no encontrado' 
+      };
+    }
+
+   
+    if (!itemExistente.disponible) {
+      return { 
+        ok: false, 
+        error: 'El item ya está deshabilitado' 
+      };
+    }
+  
+   const { data: itemActualizado, error: errorActualizacion } = await supabaseAdmin
+      .from('item')
+      .update({ disponible: false })
+      .eq('id_item', id)
+      .select()
+      .single();
+
+    if (errorActualizacion) {
+      console.error('Error de Supabase:', errorActualizacion);
+      return { 
+        ok: false, 
+        error: 'Error al deshabilitar el item' 
+      };
+    }
+
+    return { 
+      ok: true, 
+      data: {
+        item: itemActualizado,
+        message: 'Item deshabilitado exitosamente.'
+      }
+    };
+
+  } catch (error) {
+    console.error('Error al deshabilitar item:', error);
+    return { 
+      ok: false, 
+      error: 'Error inesperado al deshabilitar el item' 
+    };
+  }
 }
+
+
+
+//  Reactivar un item 
+ 
+export async function reactivarItem(id) {
+  try {
+
+   
+    const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin
+      .from('item')
+      .select('id_item, nombre, disponible')
+      .eq('id_item', id)
+      .single();
+
+    if (errorBusqueda) {
+      return { 
+        ok: false, 
+        error: 'Item no encontrado' 
+      };
+    }
+
+  
+    if (itemExistente.disponible) {
+      return { 
+        ok: false, 
+        error: 'El item ya está disponible' 
+      };
+    }
+
+
+    const { data: itemActualizado, error: errorActualizacion } = await supabaseAdmin
+      .from('item')
+      .update({ disponible: true })
+      .eq('id_item', id)
+      .select()
+      .single();
+
+    if (errorActualizacion) {
+      return { 
+        ok: false, 
+        error: 'Error al reactivar el item' 
+      };
+    }
+
+    return { 
+      ok: true, 
+      data: {
+        item: itemActualizado,
+        message: 'Item reactivado exitosamente. Ya está disponible en la tienda.'
+      }
+    };
+
+  } catch (error) {
+    console.error('Error al reactivar item:', error);
+    return { 
+      ok: false, 
+      error: 'Error inesperado al reactivar el item' 
+    };
+  }
+}
+
+
+
 
 /**
  * Obtener items desbloqueados por un estudiante
@@ -227,4 +374,140 @@ export async function obtenerEstadisticasItems() {
       return acc;
     }, {})
   };
+}
+
+
+
+//  Eliminar físicamente un item 
+ // Solo se usa cuando falla la creación del item
+ 
+export async function eliminarItemMalCreado(id) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('item')
+      .delete()
+      .eq('id_item', id);
+
+    if (error) {
+      console.error('Error al eliminar item físicamente:', error);
+      return {
+        ok: false,
+        error: 'Error al eliminar el item'
+      };
+    }
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Error al eliminar item físicamente:', error);
+    return {
+      ok: false,
+      error: 'Error inesperado al eliminar el item'
+    };
+  }
+}
+
+
+// Android
+
+// Muestra los items disponibles para la tienda (Los items que compro el alumno ya no se muestran en la tienda.).
+
+ 
+export async function obtenerItemsDisponiblesParaAlumno(usuarioId) {
+  try {
+    
+    const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+    console.log(`Usuario ID: ${usuarioId} → Alumno ID: ${alumnoId}`);
+
+    const { data: itemsDisponibles, error: errorItems } = await supabaseAdmin
+      .from('item')
+      .select('*')
+      .eq('disponible', true)
+      .order('precio', { ascending: true });
+
+    if (errorItems) {
+      return {
+        ok: false,
+        error: errorItems.message || 'Error al obtener items disponibles'
+      };
+    }
+
+    const { data: itemsComprados, error: errorComprados } = await supabaseAdmin
+      .from('alumno_has_item')
+      .select('item_id_item')
+      .eq('alumno_id_alumno', alumnoId);
+
+    if (errorComprados) {
+      return {
+        ok: false,
+        error: errorComprados.message || 'Error al verificar items comprados'
+      };
+    }
+
+    const idsComprados = itemsComprados.map(c => c.item_id_item);
+    const itemsNoComprados = itemsDisponibles.filter(
+      item => !idsComprados.includes(item.id_item)
+    );
+
+    return {
+      ok: true,
+      data: itemsNoComprados || []
+    };
+  } catch (error) {
+    console.error('Error al obtener items disponibles para alumno:', error);
+    return {
+      ok: false,
+      error: error.message || 'Error inesperado al obtener items disponibles'
+    };
+  }
+}
+
+// Muestra los items que el alumno compro
+
+export async function obtenerItemsCompradosPorAlumno(usuarioId) {
+  try {
+    
+    const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+    console.log(`Usuario ID: ${usuarioId} → Alumno ID: ${alumnoId}`);
+
+    const { data, error } = await supabaseAdmin
+      .from('alumno_has_item')
+      .select(`
+        movimiento,
+        fecha_canje,
+        item:item_id_item (
+          id_item,
+          nombre,
+          descripcion,
+          precio,
+          url_imagen,
+          disponible
+        )
+      `)
+      .eq('alumno_id_alumno', alumnoId)
+      .order('fecha_canje', { ascending: false });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message || 'Error al obtener items comprados'
+      };
+    }
+
+    const itemsComprados = data.map(compra => ({
+      ...compra.item,
+      movimiento: compra.movimiento,
+      fecha_compra: compra.fecha_canje
+    }));
+
+    return {
+      ok: true,
+      data: itemsComprados || []
+    };
+  } catch (error) {
+    console.error('Error al obtener items comprados:', error);
+    return {
+      ok: false,
+      error: error.message || 'Error inesperado al obtener items comprados'
+    };
+  }
 }

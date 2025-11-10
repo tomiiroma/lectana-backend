@@ -27,7 +27,8 @@ import puntosRoutes from './routes/puntos.routes.js';
 import audioRouter from './routes/audio.routes.js';
 import actividadDocenteRouter from './routes/actividad-docente.routes.js';
 import logroRouter from './routes/logro.routes.js';
-import elevenLabs from './routes/tts.routes.js'
+import elevenLabs from './routes/tts.routes.js';
+import itemRouter from './routes/item.routes.js';
 
 
 const app = express();
@@ -196,6 +197,7 @@ app.use('/api/puntos', puntosRoutes);
 app.use('/api/audio', audioRouter);
 app.use('/api/docentes/actividades', actividadDocenteRouter);
 app.use('/api/logros', logroRouter);
+app.use('/api/items', itemRouter);
 
 // Rutas SIN prefijo /api/ para compatibilidad con frontend
 app.use('/auth', authRouter);
@@ -216,7 +218,7 @@ app.use('/puntos', puntosRoutes);
 app.use('/audio', audioRouter);
 app.use('/audioElevenLabs', elevenLabs);
 app.use('/logros', logroRouter);
-
+app.use('/items', itemRouter);
 app.use('/docentes/actividades', actividadDocenteRouter);
 
 
