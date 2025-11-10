@@ -172,7 +172,62 @@ export async function obtenerActividadesDeDocente(docenteId) {
     .order('fecha_publicacion', { ascending: false });
   
   if (error) throw new Error(error.message);
-  return data;
+  
+  // Agregar resultados_actividad con estadísticas a cada actividad
+  const actividadesConResultados = await Promise.all(
+    data.map(async (actividad) => {
+      // Obtener resultados de esta actividad
+      const { data: resultados, error: resultadosError } = await supabaseAdmin
+        .from('resultados_actividad')
+        .select('*')
+        .eq('id_actividad', actividad.id_actividad);
+      
+      if (resultadosError) {
+        console.error(`Error al obtener resultados para actividad ${actividad.id_actividad}:`, resultadosError);
+        // Continuar sin resultados si hay error
+      }
+      
+      // Obtener total de estudiantes en aulas asignadas
+      const aulasIds = actividad.actividad_aula?.map(aa => aa.aula?.id_aula).filter(Boolean) || [];
+      let totalEstudiantes = 0;
+      
+      if (aulasIds.length > 0) {
+        const { count, error: countError } = await supabaseAdmin
+          .from('alumno_has_aula')
+          .select('*', { count: 'exact', head: true })
+          .in('aula_id_aula', aulasIds);
+        
+        if (!countError) {
+          totalEstudiantes = count || 0;
+        }
+      }
+      
+      // Calcular estadísticas
+      const resultadosData = resultados || [];
+      const completadas = resultadosData.filter(r => r.estado === 'completada').length;
+      const corregidas = resultadosData.filter(r => r.sin_corregir === 0).length;
+      const sinCorregir = resultadosData.filter(r => r.sin_corregir > 0).length;
+      
+      // Calcular nota promedio
+      const notas = resultadosData.map(r => r.porcentaje).filter(n => n !== null && n !== undefined);
+      const notaPromedio = notas.length > 0 
+        ? notas.reduce((sum, nota) => sum + nota, 0) / notas.length 
+        : 0;
+      
+      return {
+        ...actividad,
+        resultados_actividad: {
+          sin_corregir: sinCorregir,
+          total_estudiantes: totalEstudiantes,
+          completadas: completadas,
+          corregidas: corregidas,
+          nota_promedio: Math.round(notaPromedio * 100) / 100
+        }
+      };
+    })
+  );
+  
+  return actividadesConResultados;
 }
 
 // Obtener actividad específica del docente

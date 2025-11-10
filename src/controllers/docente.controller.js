@@ -117,11 +117,18 @@ export async function adminActualizarDocenteController(req, res, next) {
     const {id_alumno, total,total_correctas, total_incorrectas,sin_corregir, estado, nota } = req.body;
 
     const resultado_actividad = await completarActividad(idActividad,id_alumno, total,total_correctas, total_incorrectas,sin_corregir, estado, nota )
-    res.status(200).json({resultado_actividad});
+    res.status(200).json({
+      ok: true,
+      mensaje: "Actividad corregida exitosamente",
+      resultado_actividad
+    });
 
   }catch(error){
       console.log("Error", error.message)
-      throw new Error(error.message)
+      return res.status(500).json({
+        ok: false,
+        error: error.message
+      })
     }
    
 

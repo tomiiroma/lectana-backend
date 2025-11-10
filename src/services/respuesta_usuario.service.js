@@ -144,34 +144,64 @@ export async function verificarRespuestaExistente(alumno_id_alumno, pregunta_act
   return data !== null;
 }
 
-// Obtener estadísticas de respuestas de una actividad
+// Obtener estadísticas de respuestas de una actividad basadas en resultados_actividad
 export async function obtenerEstadisticasActividad(actividad_id_actividad) {
-  const { data, error } = await supabaseAdmin
-    .from('respuesta_usuario')
+  // 1. Obtener todos los resultados de la actividad
+  const { data: resultados, error: resultadosError } = await supabaseAdmin
+    .from('resultados_actividad')
+    .select('*')
+    .eq('id_actividad', actividad_id_actividad);
+  
+  if (resultadosError) throw new Error(resultadosError.message);
+  
+  // 2. Obtener total de estudiantes en aulas asignadas a la actividad
+  const { data: actividadAulas, error: actividadAulasError } = await supabaseAdmin
+    .from('actividad_aula')
     .select(`
-      *,
-      pregunta_actividad:pregunta_actividad_id_pregunta_actividad(
-        id_pregunta_actividad,
-        enunciado
-      ),
-      respuesta_actividad:respuesta_actividad_id_respuesta_actividad(
-        es_correcta
+      aula:aula_id_aula(
+        id_aula
       )
     `)
-    .eq('pregunta_actividad.actividad_id_actividad', actividad_id_actividad);
+    .eq('actividad_id_actividad', actividad_id_actividad);
   
-  if (error) throw new Error(error.message);
+  if (actividadAulasError) throw new Error(actividadAulasError.message);
   
-  // Calcular estadísticas
-  const totalRespuestas = data.length;
-  const respuestasCorrectas = data.filter(r => r.respuesta_actividad?.respuesta_correcta).length;
-  const porcentajeCorrecto = totalRespuestas > 0 ? (respuestasCorrectas / totalRespuestas) * 100 : 0;
+  // Obtener IDs de aulas
+  const aulasIds = actividadAulas?.map(aa => aa.aula?.id_aula).filter(Boolean) || [];
+  
+  // Contar estudiantes en esas aulas
+  let totalEstudiantes = 0;
+  if (aulasIds.length > 0) {
+    const { count, error: countError } = await supabaseAdmin
+      .from('alumno_has_aula')
+      .select('*', { count: 'exact', head: true })
+      .in('aula_id_aula', aulasIds);
+    
+    if (countError) throw new Error(countError.message);
+    totalEstudiantes = count || 0;
+  }
+  
+  // 3. Calcular estadísticas basadas en resultados_actividad
+  const completadas = resultados?.filter(r => r.estado === 'completada').length || 0;
+  const corregidas = resultados?.filter(r => r.sin_corregir === 0).length || 0;
+  const pendientes = resultados?.filter(r => r.sin_corregir > 0).length || 0;
+  
+  // Calcular notas
+  const notas = resultados?.map(r => r.porcentaje).filter(n => n !== null && n !== undefined) || [];
+  const notaPromedio = notas.length > 0 
+    ? notas.reduce((sum, nota) => sum + nota, 0) / notas.length 
+    : 0;
+  const notaMaxima = notas.length > 0 ? Math.max(...notas) : 0;
+  const notaMinima = notas.length > 0 ? Math.min(...notas) : 0;
   
   return {
-    total_respuestas: totalRespuestas,
-    respuestas_correctas: respuestasCorrectas,
-    porcentaje_correcto: Math.round(porcentajeCorrecto * 100) / 100,
-    respuestas: data
+    total_estudiantes: totalEstudiantes,
+    completadas: completadas,
+    corregidas: corregidas,
+    pendientes: pendientes,
+    nota_promedio: Math.round(notaPromedio * 100) / 100,
+    nota_maxima: Math.round(notaMaxima * 100) / 100,
+    nota_minima: Math.round(notaMinima * 100) / 100
   };
 }
 

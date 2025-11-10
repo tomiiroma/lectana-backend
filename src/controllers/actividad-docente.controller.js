@@ -50,8 +50,7 @@ export async function obtenerActividadesDocenteController(req, res, next) {
     
     res.json({ 
       ok: true, 
-      actividades,
-      total: actividades.length 
+      data: actividades
     });
   } catch (error) {
     next(error);

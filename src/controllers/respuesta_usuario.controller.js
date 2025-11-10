@@ -81,8 +81,7 @@ export async function obtenerRespuestasPreguntaController(req, res, next) {
     const respuestas = await obtenerRespuestasPregunta(id);
     res.json({ 
       ok: true, 
-      respuestas,
-      total: respuestas.length 
+      data: respuestas
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -177,7 +176,7 @@ export async function obtenerEstadisticasActividadController(req, res, next) {
     const estadisticas = await obtenerEstadisticasActividad(id);
     res.json({ 
       ok: true, 
-      estadisticas
+      data: estadisticas
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
