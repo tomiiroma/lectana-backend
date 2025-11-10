@@ -82,29 +82,64 @@ export async function crearItem({ nombre, descripcion, precio, url_imagen, dispo
   }
 }
 
-/**
- * Actualizar un item existente
- */
-export async function actualizarItem(id, { nombre, descripcion, precio_puntos, tipo, categoria, url_imagen, activo }) {
-  const { data, error } = await supabaseAdmin
-    .from('item')
-    .update({
-      nombre,
-      descripcion,
-      precio_puntos,
-      tipo,
-      categoria,
-      url_imagen,
-      activo
-    })
-    .eq('id_item', id)
-    .select()
-    .single();
+// Actualizar item
 
-  if (error) throw new Error(error.message);
-  return data;
+export async function actualizarItem(id, data) {
+  try {
+    
+    const { data: itemExistente, error: errorBusqueda } = await supabaseAdmin
+      .from('item')
+      .select('*')
+      .eq('id_item', id)
+      .single();
+
+    if (errorBusqueda || !itemExistente) {
+      return {
+        ok: false,
+        error: 'Item no encontrado'
+      };
+    }
+
+    
+    if (data.precio !== undefined) {
+      const precio = Number(data.precio);
+      if (isNaN(precio) || precio < 1) {
+        return {
+          ok: false,
+          error: 'El precio debe ser un número mayor o igual a 1'
+        };
+      }
+      data.precio = precio;
+    }
+
+ 
+    const { data: itemActualizado, error: errorActualizacion } = await supabaseAdmin
+      .from('item')
+      .update(data)
+      .eq('id_item', id)
+      .select()
+      .single();
+
+    if (errorActualizacion) {
+      console.error('Error al actualizar item:', errorActualizacion);
+      return {
+        ok: false,
+        error: 'Error al actualizar el item'
+      };
+    }
+
+    return {
+      ok: true,
+      data: itemActualizado
+    };
+  } catch (error) {
+    console.error('Error inesperado al actualizar item:', error);
+    return {
+      ok: false,
+      error: 'Error inesperado al actualizar el item'
+    };
+  }
 }
-
 
  // Eliminar un item 
  

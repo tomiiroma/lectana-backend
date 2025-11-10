@@ -17,7 +17,34 @@ export const crearItemSchema = z.object({
 });
 
 
-export const actualizarItemSchema = crearItemSchema.partial();
+export const actualizarItemSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio').optional(),
+  descripcion: z.string().optional(),
+  disponible: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === 'string') {
+        return val === 'true' || val === '1';
+      }
+      return Boolean(val);
+    },
+    z.boolean().optional()
+  ),
+  precio: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null) return undefined;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) return undefined;
+      return num;
+    },
+    z.number().min(1, 'El precio debe ser mayor o igual a 1').optional()
+  ),
+  url_imagen: z.string().url('URL de imagen inválida').optional()
+}).refine(
+  (data) => Object.keys(data).length > 0,
+  'Debe proporcionar al menos un campo para actualizar'
+);
+
 
 
 export const idSchema = z.object({

@@ -127,21 +127,110 @@ export async function listarItemsController(req, res, next) {
 }
 
 
-
+// Actualizar item
 
 export async function actualizarItemController(req, res, next) {
   try {
-    const { id } = idSchema.parse(req.params);
-    const data = actualizarItemSchema.parse(req.body);
-    const result = await actualizarItem(id, data);
-    res.json({ ok: true, data: result });
+    const { id } = req.params;
+
+    
+    const dataValidada = actualizarItemSchema.parse(req.body);
+
+    
+    if (req.file) {
+      console.log('Nueva imagen detectada');
+
+   
+      const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!tiposPermitidos.includes(req.file.mimetype)) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Solo se aceptan imágenes JPG, PNG, WebP o GIF'
+        });
+      }
+
+   
+      if (req.file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({
+          ok: false,
+          error: 'La imagen es demasiado grande. Máximo 5MB'
+        });
+      }
+
+      
+      const { data: itemActual, error: errorItem } = await supabaseAdmin
+        .from('item')
+        .select('url_imagen')
+        .eq('id_item', id)
+        .single();
+
+      if (errorItem) {
+        return res.status(404).json({
+          ok: false,
+          error: 'Item no encontrado'
+        });
+      }
+
+      try {
+       
+        const { url: nuevaUrlImagen } = await subirImagenItem(
+          id,
+          req.file.buffer,
+          req.file.originalname
+        );
+
+        console.log('Nueva imagen subida:', nuevaUrlImagen);
+
+     
+        dataValidada.url_imagen = nuevaUrlImagen;
+
+        if (itemActual.url_imagen) {
+          await eliminarImagenItem(itemActual.url_imagen);
+          console.log('🗑️ Imagen antigua eliminada');
+        }
+      } catch (imageError) {
+        console.error('Error al procesar imagen:', imageError);
+        return res.status(500).json({
+          ok: false,
+          error: `Error al procesar imagen: ${imageError.message}`
+        });
+      }
+    }
+
+    
+    const result = await actualizarItem(id, dataValidada);
+
+    if (!result.ok) {
+      return res.status(400).json({
+        ok: false,
+        error: result.error
+      });
+    }
+
+    
+    res.json({
+      ok: true,
+      data: result.data,
+      message: 'Item actualizado exitosamente'
+    });
+
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ ok: false, error: 'Validación fallida', detalles: error.flatten() });
+      console.error('Error de validación:', error.errors);
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.errors
+      });
     }
-    next(error);
+    console.error('Error en actualizarItemController:', error);
+    return res.status(500).json({
+      ok: false,
+      error: error.message || 'Error interno del servidor'
+    });
   }
 }
+
 
 
 //Deshabilitar item
