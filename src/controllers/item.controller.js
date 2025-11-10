@@ -6,6 +6,7 @@ import {
   actualizarItem, 
   eliminarItem,
   reactivarItem,
+  obtenerUrlImagenItem,
   desbloquearItem,
   obtenerItemsDesbloqueados,
   verificarItemDesbloqueado,
@@ -133,14 +134,14 @@ export async function actualizarItemController(req, res, next) {
   try {
     const { id } = req.params;
 
-    
+
     const dataValidada = actualizarItemSchema.parse(req.body);
 
-    
+   
     if (req.file) {
       console.log('Nueva imagen detectada');
 
-   
+      
       const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
       if (!tiposPermitidos.includes(req.file.mimetype)) {
         return res.status(400).json({
@@ -149,7 +150,7 @@ export async function actualizarItemController(req, res, next) {
         });
       }
 
-   
+      
       if (req.file.size > 5 * 1024 * 1024) {
         return res.status(400).json({
           ok: false,
@@ -158,21 +159,17 @@ export async function actualizarItemController(req, res, next) {
       }
 
       
-      const { data: itemActual, error: errorItem } = await supabaseAdmin
-        .from('item')
-        .select('url_imagen')
-        .eq('id_item', id)
-        .single();
+      const resultadoUrl = await obtenerUrlImagenItem(id);
 
-      if (errorItem) {
+      if (!resultadoUrl.ok) {
         return res.status(404).json({
           ok: false,
-          error: 'Item no encontrado'
+          error: resultadoUrl.error
         });
       }
 
       try {
-       
+        
         const { url: nuevaUrlImagen } = await subirImagenItem(
           id,
           req.file.buffer,
@@ -181,12 +178,12 @@ export async function actualizarItemController(req, res, next) {
 
         console.log('Nueva imagen subida:', nuevaUrlImagen);
 
-     
         dataValidada.url_imagen = nuevaUrlImagen;
 
-        if (itemActual.url_imagen) {
-          await eliminarImagenItem(itemActual.url_imagen);
-          console.log('🗑️ Imagen antigua eliminada');
+       
+        if (resultadoUrl.url_imagen) {
+          await eliminarImagenItem(resultadoUrl.url_imagen);
+          console.log('Imagen antigua eliminada');
         }
       } catch (imageError) {
         console.error('Error al procesar imagen:', imageError);
@@ -197,7 +194,6 @@ export async function actualizarItemController(req, res, next) {
       }
     }
 
-    
     const result = await actualizarItem(id, dataValidada);
 
     if (!result.ok) {
@@ -207,7 +203,7 @@ export async function actualizarItemController(req, res, next) {
       });
     }
 
-    
+  
     res.json({
       ok: true,
       data: result.data,
@@ -230,7 +226,6 @@ export async function actualizarItemController(req, res, next) {
     });
   }
 }
-
 
 
 //Deshabilitar item

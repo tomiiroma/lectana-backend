@@ -511,3 +511,33 @@ export async function obtenerItemsCompradosPorAlumno(usuarioId) {
     };
   }
 }
+
+// obtener url de la imagen
+
+export async function obtenerUrlImagenItem(id) {
+  try {
+    const { data: item, error } = await supabaseAdmin
+      .from('item')
+      .select('url_imagen')
+      .eq('id_item', id)
+      .single();
+
+    if (error || !item) {
+      return {
+        ok: false,
+        error: 'Item no encontrado'
+      };
+    }
+
+    return {
+      ok: true,
+      url_imagen: item.url_imagen
+    };
+  } catch (error) {
+    console.error('Error al obtener URL de imagen:', error);
+    return {
+      ok: false,
+      error: 'Error al obtener información del item'
+    };
+  }
+}
