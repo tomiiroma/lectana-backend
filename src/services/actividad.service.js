@@ -458,10 +458,12 @@ if (!fecha_entrega || !tipo || !id_cuento || !id_usuario) {
     }
 
     const {data, error} = await supabaseAdmin
-    .from('actividad')
-    .select()
-    .eq('id_aula', id_aula)
-    
+    .from('actividad_aula')
+    .select(`
+    *,
+    actividad:actividad_id_actividad (*)
+  `)
+    .eq('aula_id_aula', id_aula)
 
         if(error){
       throw new Error(error.message)
