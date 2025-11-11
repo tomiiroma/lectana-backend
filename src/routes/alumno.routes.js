@@ -9,7 +9,8 @@ import {
   responderPreguntaController,
   obtenerAulasAlumnoController,
   unirseAulaController,
-  salirAulaController
+  salirAulaController,
+  cambiarAulaController
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 import { completarActividad } from '../services/alumno.service.js';
@@ -46,5 +47,7 @@ router.post('/unirse-aula', requireAuth, requireRole('alumno'), unirseAulaContro
 
 // Salir de un aula
 router.post('/salir-aula', requireAuth, requireRole('alumno'), salirAulaController);
+
+router.post('/cambiarAula', requireAuth, requireRole('alumno'), cambiarAulaController)
 
 export default router;

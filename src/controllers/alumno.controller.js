@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, obtenerAulasAlumno, unirseAula, salirAula } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, obtenerAulasAlumno, unirseAula, salirAula, cambiarAula } from '../services/alumno.service.js';
 import { crearAlumnoSchema, listarSchema, actualizarPerfilSchema,adminActualizarAlumnoSchema } from '../schemas/alumnoSchema.js';
 import { idSchema } from "../schemas/idSchema.js";
 
@@ -178,4 +178,18 @@ export async function salirAulaController(req, res, next) {
     }
     next(error);
   }
+}
+
+export async function cambiarAulaController(req,res){
+    try{
+      const alumnoId = req.user.sub;
+      const aulaId = req.body.aulaId;
+      console.log(alumnoId, aulaId)
+      const cambioAula = await cambiarAula(alumnoId, aulaId)
+
+      res.status(200).json({cambioAula})
+    }catch(error){
+    console.log("Error", error.message)
+    throw new Error(error.message)
+    }
 }

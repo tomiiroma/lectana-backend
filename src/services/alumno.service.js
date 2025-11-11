@@ -390,3 +390,35 @@ export async function salirAula(usuarioId) {
     aula: asignacion.aula
   };
 }
+
+
+export async function cambiarAula(id_usuario,id_aula){
+    if(!id_usuario || !id_aula){
+          throw new Error('No estás asignado a ningún aula');
+    }
+
+      const { data: alumnoData, error: errorId } = await supabaseAdmin
+    .from("alumno")
+    .select("id_alumno")
+    .eq("usuario_id_usuario", id_usuario)
+    .single(); 
+
+   if(errorId){
+      throw new Error('Error al cambiar del aula: ' + error.message);
+    }
+
+
+    const {data, error} = await supabaseAdmin
+    .from('alumno_has_aula')
+ .upsert({ 
+            alumno_id_alumno: alumnoData.id_alumno, 
+            aula_id_aula: id_aula
+        })
+        .select()
+
+    if(error){
+      throw new Error('Error al cambiar del aula: ' + error.message);
+    }
+
+    return data
+}
