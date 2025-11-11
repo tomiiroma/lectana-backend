@@ -230,30 +230,31 @@ export async function obtenerActividadesDeDocente(docenteId) {
   return actividadesConResultados;
 }
 
-// Obtener actividad específica del docente
+// Obtener actividad específica del docente con estructura completa
 export async function obtenerActividadPorIdDocente(actividadId, docenteId) {
   // Verificar acceso
   await verificarAccesoActividad(actividadId, docenteId);
 
-  const { data, error } = await supabaseAdmin
+  // 1. Obtener la actividad completa con toda su información
+  const { data: actividad, error: actividadError } = await supabaseAdmin
     .from('actividad')
     .select(`
       *,
-      cuento:cuento_id_cuento(id_cuento, titulo),
+      cuento:cuento_id_cuento(
+        id_cuento,
+        titulo,
+        descripcion,
+        edad_publico,
+        url_img,
+        duracion,
+        autor:autor_id_autor(nombre, apellido),
+        genero:genero_id_genero(nombre)
+      ),
       actividad_aula(
         aula:aula_id_aula(
           id_aula, 
           nombre_aula,
           docente_id_docente
-        )
-      ),
-      pregunta_actividad(
-        id_pregunta_actividad,
-        enunciado,
-        respuesta_actividad(
-          id_respuesta_actividad,
-          respuestas,
-          respuesta_correcta
         )
       )
     `)
@@ -261,8 +262,54 @@ export async function obtenerActividadPorIdDocente(actividadId, docenteId) {
     .is('deleted_at', null)
     .single();
   
-  if (error) throw new Error(error.message);
-  return data;
+  if (actividadError) throw new Error(actividadError.message);
+
+  // 2. Obtener preguntas de la actividad
+  const { data: pregunta_actividad, error: errorPregunta } = await supabaseAdmin
+    .from('pregunta_actividad')
+    .select('*')
+    .eq('actividad_id_actividad', actividadId);
+
+  if (errorPregunta) {
+    console.log("Error al obtener preguntas:", errorPregunta.message);
+    throw new Error("Error en pregunta_actividad");
+  }
+
+  // 3. Si no hay preguntas, devolver la actividad sin preguntas
+  if (!pregunta_actividad || pregunta_actividad.length === 0) {
+    return {
+      ...actividad,
+      pregunta_actividad: []
+    };
+  }
+
+  // 4. Extraer todos los IDs de las preguntas
+  const preguntaIds = pregunta_actividad.map(p => p.id_pregunta_actividad);
+
+  // 5. Obtener respuestas de todas las preguntas
+  const { data: respuesta_actividad, error: errorRespuesta } = await supabaseAdmin
+    .from('respuesta_actividad')
+    .select('*')
+    .in('pregunta_actividad_id_pregunta_actividad', preguntaIds);
+
+  if (errorRespuesta) {
+    console.log("Error al obtener respuestas:", errorRespuesta.message);
+    throw new Error("Error en respuesta_actividad");
+  }
+
+  // 6. Mapear cada pregunta con sus respuestas
+  const preguntasConRespuestas = pregunta_actividad.map(pregunta => ({
+    ...pregunta,
+    respuesta_actividad: respuesta_actividad?.filter(
+      respuesta => respuesta.pregunta_actividad_id_pregunta_actividad === pregunta.id_pregunta_actividad
+    ) || []
+  }));
+
+  // 7. Devolver la actividad completa con preguntas y respuestas
+  return {
+    ...actividad,
+    pregunta_actividad: preguntasConRespuestas
+  };
 }
 
 // Actualizar actividad completa del docente
