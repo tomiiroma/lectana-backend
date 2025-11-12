@@ -110,11 +110,11 @@ export async function responderPreguntaController(req, res){
   try{
   const {respuesta} = req.body;
   const {id_pregunta} = req.params;
-  const id_alumno = req.user.sub;
+  const id_usuario = req.user.sub;
 
 
 
-  const respuestaPregunta = await responderPregunta(respuesta, id_pregunta, id_alumno);
+  const respuestaPregunta = await responderPregunta(respuesta, id_pregunta, id_usuario);
 
     res.status(200).json({respuestaPregunta})
   }catch(error){
