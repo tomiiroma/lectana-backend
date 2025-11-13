@@ -1,4 +1,7 @@
-import {  obtenerPuntos } from "../services/puntos.service.js";
+import {  obtenerPuntos, obtenerPuntosPorUsuario } from "../services/puntos.service.js";
+
+
+// puntos del alumno 
 
 export async function obtenerPuntosController(req, res) {
     try {
@@ -14,7 +17,7 @@ export async function obtenerPuntosController(req, res) {
 
         const result = await obtenerPuntos(id, puntos);
 
-        res.status(200).json({ // 200, no 201
+        res.status(200).json({ 
             ok: true,
             mensaje: "Puntos actualizados exitosamente",
             data: result
@@ -28,4 +31,43 @@ export async function obtenerPuntosController(req, res) {
             error: error.message || 'Error al procesar los puntos'
         });
     }
+}
+
+
+ // Obtiene los puntos del alumno autenticado usando los datos de la sesión
+ 
+export async function obtenerMisPuntosController(req, res, next) {
+  try {
+ 
+    const usuarioId =  req.user.sub;;
+    
+    if (!usuarioId) {
+      return res.status(401).json({ 
+        ok: false, 
+        error: 'Usuario no autenticado' 
+      });
+    }
+
+    const puntos = await obtenerPuntosPorUsuario(usuarioId);
+    
+    if (!puntos) {
+      return res.status(404).json({ 
+        ok: false, 
+        error: 'No se encontraron puntos para este usuario' 
+      });
+    }
+
+    res.json({ 
+      ok: true, 
+      puntos 
+    });
+  } catch (error) {
+    if (error.message.includes('Alumno no encontrado')) {
+      return res.status(404).json({ 
+        ok: false, 
+        error: 'El usuario no está registrado como alumno' 
+      });
+    }
+    next(error);
+  }
 }

@@ -80,9 +80,9 @@ export async function crearItemController(req, res, next) {
         message: 'Item creado exitosamente con imagen' 
       });
     } catch (imageError) {
-      console.error('Error al subir imagen, eliminando item físicamente...');
+      console.error('Error al subir imagen, eliminando item.');
       await eliminarItemMalCreado(result.data.id_item);
-      throw new Error(`Error al procesar imagen: ${imageError.message}`);
+      throw new Error(`Error al cargar la imagen: ${imageError.message}`);
     }
     
   } catch (error) {
