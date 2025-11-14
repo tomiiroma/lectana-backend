@@ -45,16 +45,10 @@ export const actualizarItemSchema = z.object({
   'Debe proporcionar al menos un campo para actualizar'
 );
 
-
-
 export const idSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-export const categoriaSchema = z.object({
-  categoria: z.string()
-});
-
-export const tipoSchema = z.object({
-  tipo: z.string()
+export const comprarItemSchema = z.object({
+  item_id: z.number().int().positive()
 });

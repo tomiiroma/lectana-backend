@@ -123,8 +123,9 @@ export async function obtenerContador(usuarioId, tipoEvento) {
     case 'compras':
       const { count: compras } = await supabaseAdmin
         .from('alumno_has_item') 
-        .select('*', { count: 'exact', head: true })
-        .eq('alumno_id', alumno.id_alumno);
+          .select('*', { count: 'exact', head: true })
+        .eq('alumno_id_alumno', alumno.id_alumno) 
+        .eq('movimiento', 'compra');
       return compras || 0;
 
     default:

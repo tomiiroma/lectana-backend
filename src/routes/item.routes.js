@@ -8,7 +8,8 @@ import {
   reactivarItemController,
   deshabilitarItemController,
   obtenerItemsDisponiblesController,
-  obtenerItemsCompradosController
+  obtenerItemsCompradosController,
+  comprarItemController
 } from '../controllers/item.controller.js';
 
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
@@ -29,6 +30,9 @@ router.use((req, res, next) => {
 });
 
 // Alumno android
+
+// Comprar avatar
+router.post('/comprar/:id', requireAuth, requireRole('alumno'), comprarItemController);
 
 
 // Items disponibles en la tienda

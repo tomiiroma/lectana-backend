@@ -1,5 +1,10 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { obtenerPuntosPorUsuario, restarPuntos   } from './puntos.service.js';
+import { procesarEvento, obtenerContador } from './logro.eventos.service.js';
 
+const TIPOS_MOVIMIENTO = {
+  COMPRA: 'compra'
+};
 
   // Obtener id_alumno desde id_usuario
  
@@ -538,6 +543,139 @@ export async function obtenerUrlImagenItem(id) {
     return {
       ok: false,
       error: 'Error al obtener información del item'
+    };
+  }
+}
+
+
+// ------------------------------------------------  Compras de items -----------------------------------------------------------
+
+
+ // Verifica si el alumno ya tiene el item
+ 
+async function alumnoTieneItem(alumnoId, itemId) {
+  const { data, error } = await supabaseAdmin
+    .from('alumno_has_item')
+    .select('*')
+    .eq('alumno_id_alumno', alumnoId)
+    .eq('item_id_item', itemId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Error al verificar item: ${error.message}`);
+  }
+
+  return !!data; 
+}
+
+
+ // Registrar la compra del item
+ 
+async function registrarCompraItem(alumnoId, itemId) {
+  const { data, error } = await supabaseAdmin
+    .from('alumno_has_item')
+    .insert({
+      alumno_id_alumno: alumnoId,
+      item_id_item: itemId,
+      movimiento: TIPOS_MOVIMIENTO.COMPRA,
+      fecha_canje: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Error al registrar compra: ${error.message}`);
+  }
+
+  return data;
+}
+
+
+
+ // Comprar un item 
+
+export async function comprarItem(usuarioId, itemId) {
+  console.log(`Iniciando compra - Usuario: ${usuarioId}, Item: ${itemId}`);
+
+  try {
+    
+    const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+    console.log(`Alumno encontrado: ${alumnoId}`);
+
+   
+    const item = await obtenerItemPorId(itemId);
+    if (!item) {
+      throw new Error('El item no existe');
+    }
+    console.log(`Item encontrado: ${item.nombre} - Precio: ${item.precio} puntos`);
+
+    
+    if (!item.disponible) {
+      throw new Error('Este item no está disponible para compra');
+    }
+
+    
+    const yaLoTiene = await alumnoTieneItem(alumnoId, itemId);
+    if (yaLoTiene) {
+      throw new Error('Ya tienes este item');
+    }
+
+    // puntos del alumno
+    const puntos = await obtenerPuntosPorUsuario(usuarioId);
+    if (!puntos) {
+      throw new Error('No se encontraron puntos para este alumno');
+    }
+    console.log(`Puntos del alumno: ${puntos.puntos}`);
+
+    // Validar que tenga suficientes puntos
+    if (puntos.puntos < item.precio) {
+      throw new Error(
+        `Puntos insuficientes. Tienes ${puntos.puntos} puntos, necesitas ${item.precio} puntos`
+      );
+    }
+
+    // Descontar los puntos
+    const puntosActualizados = await restarPuntos(alumnoId, item.precio);
+    console.log(`Puntos descontados. Nuevos puntos: ${puntosActualizados.puntos}`);
+
+  
+    const compra = await registrarCompraItem(alumnoId, itemId);
+    console.log(`Compra registrada exitosamente`);
+
+      // ============================================
+    
+    // Obtener el total de avatares comprados 
+    const totalAvatares = await obtenerContador(usuarioId, 'compras');
+
+
+    // Procesar eventos de logros
+    const { logrosDesbloqueados } = await procesarEvento(
+      usuarioId,
+      'compras', // o 'avatares' si prefieres ese nombre
+      totalAvatares
+    );
+
+    if (logrosDesbloqueados.length > 0) {
+      console.log(`Logros desbloqueados: ${logrosDesbloqueados.map(l => l.nombre).join(', ')}`);
+    }
+
+
+    return {
+      ok: true,
+      compra,
+      item,
+      puntosAnteriores: puntos.puntos,
+      puntosActuales: puntosActualizados.puntos,
+      puntosGastados: item.precio,
+       logrosDesbloqueados,
+      mensaje: `¡Compraste ${item.nombre}! Te quedan ${puntosActualizados.puntos} puntos`
+    };
+
+  } catch (error) {
+    console.error('Error en comprarItem:', error.message);
+    return {
+      ok: false,
+      error: error.message
     };
   }
 }

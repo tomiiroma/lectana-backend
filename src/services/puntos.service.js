@@ -152,3 +152,58 @@ export async function obtenerPuntos(id_alumno, puntosASumar) {
 
     return data;
 }
+
+
+// Restar puntos
+
+export async function restarPuntos(alumnoId, puntosARestar) {
+  console.log(`Decrementando ${puntosARestar} puntos del alumno ${alumnoId}`);
+  
+  try {
+    
+    const { data: alumnoData, error: errorSelect } = await supabaseAdmin
+      .from('puntos_alumno')
+      .select('puntos')
+      .eq('alumno_id_alumno', alumnoId)
+      .single();
+
+    if (errorSelect) {
+      throw new Error(`Error al obtener puntos: ${errorSelect.message}`);
+    }
+
+    if (!alumnoData) {
+      throw new Error('Puntos del alumno no encontrados');
+    }
+
+    const puntosActuales = alumnoData.puntos;
+    
+   
+    if (puntosActuales < puntosARestar) {
+      throw new Error(
+        `Puntos insuficientes. Tiene ${puntosActuales} puntos, intenta restar ${puntosARestar} puntos`
+      );
+    }
+
+    const nuevosPuntos = puntosActuales - puntosARestar;
+
+ 
+    const { data, error: errorUpdate } = await supabaseAdmin
+      .from('puntos_alumno')
+      .update({ puntos: nuevosPuntos })
+      .eq('alumno_id_alumno', alumnoId)
+      .select()
+      .single();
+
+    if (errorUpdate) {
+      throw new Error(`Error al actualizar puntos: ${errorUpdate.message}`);
+    }
+
+    console.log(`Puntos descontados: ${puntosActuales} → ${nuevosPuntos}`);
+    
+    return data;
+
+  } catch (error) {
+    console.error('Error al descontar los puntos:', error);
+    throw error;
+  }
+}

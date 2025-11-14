@@ -12,10 +12,11 @@ import {
   verificarItemDesbloqueado,
   obtenerEstadisticasItems,
    obtenerItemsDisponiblesParaAlumno, 
-  obtenerItemsCompradosPorAlumno
+  obtenerItemsCompradosPorAlumno,
+  comprarItem 
 } from '../services/item.service.js';
 import { subirImagenItem, eliminarImagenItem } from '../services/item.imagen.service.js'
-import { actualizarItemSchema, crearItemSchema, idSchema, categoriaSchema, tipoSchema } from '../schemas/itemSchema.js';
+import { actualizarItemSchema, crearItemSchema, idSchema, comprarItemSchema } from '../schemas/itemSchema.js';
 
 
 export async function crearItemController(req, res, next) {
@@ -381,6 +382,83 @@ export async function obtenerItemsCompradosController(req, res, next) {
     });
   } catch (error) {
     console.error('Error en obtenerItemsCompradosController:', error);
+    next(error);
+  }
+}
+
+
+// --------------------------------------------- Compras ----------------------------------------------------------
+
+
+//  Compra de un avatar
+ 
+ export async function comprarItemController(req, res, next) {
+  try {
+    
+    const { id } = idSchema.parse(req.params);
+    const usuarioId = req.user.sub;
+
+    if (!usuarioId) {
+      return res.status(401).json({
+        ok: false,
+        error: 'Usuario no autenticado'
+      });
+    }
+
+    const resultado = await comprarItem(usuarioId, id);
+
+    if (!resultado.ok) {
+      
+      if (resultado.error.includes('no existe')) {
+        return res.status(404).json({
+          ok: false,
+          error: resultado.error
+        });
+      }
+      
+      
+      if (
+        resultado.error.includes('insuficientes') ||
+        resultado.error.includes('Ya tienes') ||
+        resultado.error.includes('no está disponible')
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: resultado.error
+        });
+      }
+
+    
+      return res.status(500).json({
+        ok: false,
+        error: resultado.error
+      });
+    }
+
+    // Resultado de la compra
+    res.status(201).json({
+      ok: true,
+      compra: resultado.compra,
+      item: resultado.item,
+      puntosActuales: resultado.puntosActuales,
+      puntosGastados: resultado.puntosGastados,
+       logrosDesbloqueados: resultado.logrosDesbloqueados || [],
+      mensaje: resultado.mensaje,
+       mensajeLogros: resultado.logrosDesbloqueados?.length > 0
+        ? `🏆 ¡Desbloqueaste ${resultado.logrosDesbloqueados.length} logro(s)!`
+        : null
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'ID de item inválido',
+        detalles: error.flatten()
+      });
+    }
+    
+    console.error('Error en comprarItemController:', error);
     next(error);
   }
 }
