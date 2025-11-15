@@ -13,10 +13,11 @@ import {
   obtenerEstadisticasItems,
    obtenerItemsDisponiblesParaAlumno, 
   obtenerItemsCompradosPorAlumno,
+  obtenerAlumnosPorItem,
   comprarItem 
 } from '../services/item.service.js';
 import { subirImagenItem, eliminarImagenItem } from '../services/item.imagen.service.js'
-import { actualizarItemSchema, crearItemSchema, idSchema, comprarItemSchema } from '../schemas/itemSchema.js';
+import { actualizarItemSchema, crearItemSchema, idSchema} from '../schemas/itemSchema.js';
 
 
 export async function crearItemController(req, res, next) {
@@ -459,6 +460,50 @@ export async function obtenerItemsCompradosController(req, res, next) {
     }
     
     console.error('Error en comprarItemController:', error);
+    next(error);
+  }
+}
+
+
+//  Obtiene todos los alumnos que compraron un item específico
+ 
+export async function obtenerAlumnosPorItemController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    
+    const resultado = await obtenerAlumnosPorItem(id);
+    
+    if (!resultado.ok) {
+      if (resultado.error.includes('no existe')) {
+        return res.status(404).json({
+          ok: false,
+          error: resultado.error
+        });
+      }
+      
+      return res.status(400).json({
+        ok: false,
+        error: resultado.error
+      });
+    }
+    
+    res.json({
+      ok: true,
+      item: resultado.item,
+      alumnos: resultado.alumnos,
+      total: resultado.total
+    });
+    
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.flatten()
+      });
+    }
+    
+    console.error('Error en obtenerAlumnosPorItemController:', error);
     next(error);
   }
 }

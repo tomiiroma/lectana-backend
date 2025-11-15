@@ -679,3 +679,102 @@ export async function comprarItem(usuarioId, itemId) {
     };
   }
 }
+
+
+ // Obtiene todos los alumnos que compraron un item específico
+
+
+export async function obtenerAlumnosPorItem(itemId) {
+  try {
+    console.log(`Buscando alumnos que compraron el item ${itemId}`);
+
+   
+    const item = await obtenerItemPorId(itemId);
+    if (!item) {
+      return {
+        ok: false,
+        error: 'El item no existe'
+      };
+    }
+
+    
+    const { data: compras, error } = await supabaseAdmin
+      .from('alumno_has_item')
+      .select(`
+        alumno_id_alumno,
+        item_id_item,
+        movimiento,
+        fecha_canje,
+        alumno:alumno_id_alumno (
+          id_alumno,
+          nacionalidad,
+          alumno_col,
+          aula_id_aula,
+          usuario:usuario_id_usuario (
+            id_usuario,
+            nombre,
+            apellido,
+            email,
+            edad
+          )
+        )
+      `)
+      .eq('item_id_item', itemId)
+      .order('fecha_canje', { ascending: false });
+
+    if (error) {
+      console.error('Error al obtener alumnos:', error);
+      return {
+        ok: false,
+        error: error.message || 'Error al obtener alumnos'
+      };
+    }
+
+    
+    const alumnosFormateados = compras.map(compra => ({
+      
+      alumno_id_alumno: compra.alumno_id_alumno,
+      item_id_item: compra.item_id_item,
+      movimiento: compra.movimiento,
+      fecha_canje: compra.fecha_canje,
+      
+     
+      alumno: {
+        id_alumno: compra.alumno.id_alumno,
+        nacionalidad: compra.alumno.nacionalidad,
+        alumno_col: compra.alumno.alumno_col,
+        aula_id_aula: compra.alumno.aula_id_aula,
+        
+       
+        usuario: {
+          id_usuario: compra.alumno.usuario.id_usuario,
+          nombre: compra.alumno.usuario.nombre,
+          apellido: compra.alumno.usuario.apellido,
+          email: compra.alumno.usuario.email,
+          edad: compra.alumno.usuario.edad
+        }
+      }
+    }));
+
+    console.log(`Se encontraron ${alumnosFormateados.length} alumnos`);
+
+    return {
+      ok: true,
+      item: {
+        id_item: item.id_item,
+        nombre: item.nombre,
+        descripcion: item.descripcion,
+        precio: item.precio
+      },
+      alumnos: alumnosFormateados,
+      total: alumnosFormateados.length
+    };
+
+  } catch (error) {
+    console.error('Error en obtenerAlumnosPorItem:', error);
+    return {
+      ok: false,
+      error: error.message || 'Error al obtener alumnos'
+    };
+  }
+}
