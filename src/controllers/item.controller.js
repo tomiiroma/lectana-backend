@@ -6,15 +6,18 @@ import {
   actualizarItem, 
   eliminarItem,
   reactivarItem,
+  obtenerUrlImagenItem,
   desbloquearItem,
   obtenerItemsDesbloqueados,
   verificarItemDesbloqueado,
   obtenerEstadisticasItems,
    obtenerItemsDisponiblesParaAlumno, 
-  obtenerItemsCompradosPorAlumno
+  obtenerItemsCompradosPorAlumno,
+  obtenerAlumnosPorItem,
+  comprarItem 
 } from '../services/item.service.js';
 import { subirImagenItem, eliminarImagenItem } from '../services/item.imagen.service.js'
-import { actualizarItemSchema, crearItemSchema, idSchema, categoriaSchema, tipoSchema } from '../schemas/itemSchema.js';
+import { actualizarItemSchema, crearItemSchema, idSchema} from '../schemas/itemSchema.js';
 
 
 export async function crearItemController(req, res, next) {
@@ -79,9 +82,9 @@ export async function crearItemController(req, res, next) {
         message: 'Item creado exitosamente con imagen' 
       });
     } catch (imageError) {
-      console.error('Error al subir imagen, eliminando item físicamente...');
+      console.error('Error al subir imagen, eliminando item.');
       await eliminarItemMalCreado(result.data.id_item);
-      throw new Error(`Error al procesar imagen: ${imageError.message}`);
+      throw new Error(`Error al cargar la imagen: ${imageError.message}`);
     }
     
   } catch (error) {
@@ -133,14 +136,14 @@ export async function actualizarItemController(req, res, next) {
   try {
     const { id } = req.params;
 
-    
+
     const dataValidada = actualizarItemSchema.parse(req.body);
 
-    
+   
     if (req.file) {
       console.log('Nueva imagen detectada');
 
-   
+      
       const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
       if (!tiposPermitidos.includes(req.file.mimetype)) {
         return res.status(400).json({
@@ -149,7 +152,7 @@ export async function actualizarItemController(req, res, next) {
         });
       }
 
-   
+      
       if (req.file.size > 5 * 1024 * 1024) {
         return res.status(400).json({
           ok: false,
@@ -158,21 +161,17 @@ export async function actualizarItemController(req, res, next) {
       }
 
       
-      const { data: itemActual, error: errorItem } = await supabaseAdmin
-        .from('item')
-        .select('url_imagen')
-        .eq('id_item', id)
-        .single();
+      const resultadoUrl = await obtenerUrlImagenItem(id);
 
-      if (errorItem) {
+      if (!resultadoUrl.ok) {
         return res.status(404).json({
           ok: false,
-          error: 'Item no encontrado'
+          error: resultadoUrl.error
         });
       }
 
       try {
-       
+        
         const { url: nuevaUrlImagen } = await subirImagenItem(
           id,
           req.file.buffer,
@@ -181,12 +180,12 @@ export async function actualizarItemController(req, res, next) {
 
         console.log('Nueva imagen subida:', nuevaUrlImagen);
 
-     
         dataValidada.url_imagen = nuevaUrlImagen;
 
-        if (itemActual.url_imagen) {
-          await eliminarImagenItem(itemActual.url_imagen);
-          console.log('🗑️ Imagen antigua eliminada');
+       
+        if (resultadoUrl.url_imagen) {
+          await eliminarImagenItem(resultadoUrl.url_imagen);
+          console.log('Imagen antigua eliminada');
         }
       } catch (imageError) {
         console.error('Error al procesar imagen:', imageError);
@@ -197,7 +196,6 @@ export async function actualizarItemController(req, res, next) {
       }
     }
 
-    
     const result = await actualizarItem(id, dataValidada);
 
     if (!result.ok) {
@@ -207,7 +205,7 @@ export async function actualizarItemController(req, res, next) {
       });
     }
 
-    
+  
     res.json({
       ok: true,
       data: result.data,
@@ -230,7 +228,6 @@ export async function actualizarItemController(req, res, next) {
     });
   }
 }
-
 
 
 //Deshabilitar item
@@ -386,6 +383,127 @@ export async function obtenerItemsCompradosController(req, res, next) {
     });
   } catch (error) {
     console.error('Error en obtenerItemsCompradosController:', error);
+    next(error);
+  }
+}
+
+
+// --------------------------------------------- Compras ----------------------------------------------------------
+
+
+//  Compra de un avatar
+ 
+ export async function comprarItemController(req, res, next) {
+  try {
+    
+    const { id } = idSchema.parse(req.params);
+    const usuarioId = req.user.sub;
+
+    if (!usuarioId) {
+      return res.status(401).json({
+        ok: false,
+        error: 'Usuario no autenticado'
+      });
+    }
+
+    const resultado = await comprarItem(usuarioId, id);
+
+    if (!resultado.ok) {
+      
+      if (resultado.error.includes('no existe')) {
+        return res.status(404).json({
+          ok: false,
+          error: resultado.error
+        });
+      }
+      
+      
+      if (
+        resultado.error.includes('insuficientes') ||
+        resultado.error.includes('Ya tienes') ||
+        resultado.error.includes('no está disponible')
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error: resultado.error
+        });
+      }
+
+    
+      return res.status(500).json({
+        ok: false,
+        error: resultado.error
+      });
+    }
+
+    // Resultado de la compra
+    res.status(201).json({
+      ok: true,
+      compra: resultado.compra,
+      item: resultado.item,
+      puntosActuales: resultado.puntosActuales,
+      puntosGastados: resultado.puntosGastados,
+       logrosDesbloqueados: resultado.logrosDesbloqueados || [],
+      mensaje: resultado.mensaje,
+       mensajeLogros: resultado.logrosDesbloqueados?.length > 0
+        ? `🏆 ¡Desbloqueaste ${resultado.logrosDesbloqueados.length} logro(s)!`
+        : null
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'ID de item inválido',
+        detalles: error.flatten()
+      });
+    }
+    
+    console.error('Error en comprarItemController:', error);
+    next(error);
+  }
+}
+
+
+//  Obtiene todos los alumnos que compraron un item específico
+ 
+export async function obtenerAlumnosPorItemController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    
+    const resultado = await obtenerAlumnosPorItem(id);
+    
+    if (!resultado.ok) {
+      if (resultado.error.includes('no existe')) {
+        return res.status(404).json({
+          ok: false,
+          error: resultado.error
+        });
+      }
+      
+      return res.status(400).json({
+        ok: false,
+        error: resultado.error
+      });
+    }
+    
+    res.json({
+      ok: true,
+      item: resultado.item,
+      alumnos: resultado.alumnos,
+      total: resultado.total
+    });
+    
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.flatten()
+      });
+    }
+    
+    console.error('Error en obtenerAlumnosPorItemController:', error);
     next(error);
   }
 }

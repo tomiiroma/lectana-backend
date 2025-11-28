@@ -1,5 +1,10 @@
 import { supabaseAdmin } from '../config/supabase.js';
+import { obtenerPuntosPorUsuario, restarPuntos   } from './puntos.service.js';
+import { procesarEvento, obtenerContador } from './logro.eventos.service.js';
 
+const TIPOS_MOVIMIENTO = {
+  COMPRA: 'compra'
+};
 
   // Obtener id_alumno desde id_usuario
  
@@ -508,6 +513,268 @@ export async function obtenerItemsCompradosPorAlumno(usuarioId) {
     return {
       ok: false,
       error: error.message || 'Error inesperado al obtener items comprados'
+    };
+  }
+}
+
+// obtener url de la imagen
+
+export async function obtenerUrlImagenItem(id) {
+  try {
+    const { data: item, error } = await supabaseAdmin
+      .from('item')
+      .select('url_imagen')
+      .eq('id_item', id)
+      .single();
+
+    if (error || !item) {
+      return {
+        ok: false,
+        error: 'Item no encontrado'
+      };
+    }
+
+    return {
+      ok: true,
+      url_imagen: item.url_imagen
+    };
+  } catch (error) {
+    console.error('Error al obtener URL de imagen:', error);
+    return {
+      ok: false,
+      error: 'Error al obtener información del item'
+    };
+  }
+}
+
+
+// ------------------------------------------------  Compras de items -----------------------------------------------------------
+
+
+ // Verifica si el alumno ya tiene el item
+ 
+async function alumnoTieneItem(alumnoId, itemId) {
+  const { data, error } = await supabaseAdmin
+    .from('alumno_has_item')
+    .select('*')
+    .eq('alumno_id_alumno', alumnoId)
+    .eq('item_id_item', itemId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Error al verificar item: ${error.message}`);
+  }
+
+  return !!data; 
+}
+
+
+ // Registrar la compra del item
+ 
+async function registrarCompraItem(alumnoId, itemId) {
+  const { data, error } = await supabaseAdmin
+    .from('alumno_has_item')
+    .insert({
+      alumno_id_alumno: alumnoId,
+      item_id_item: itemId,
+      movimiento: TIPOS_MOVIMIENTO.COMPRA,
+      fecha_canje: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Error al registrar compra: ${error.message}`);
+  }
+
+  return data;
+}
+
+
+
+ // Comprar un item 
+
+export async function comprarItem(usuarioId, itemId) {
+  console.log(`Iniciando compra - Usuario: ${usuarioId}, Item: ${itemId}`);
+
+  try {
+    
+    const alumnoId = await obtenerIdAlumnoPorUsuario(usuarioId);
+    console.log(`Alumno encontrado: ${alumnoId}`);
+
+   
+    const item = await obtenerItemPorId(itemId);
+    if (!item) {
+      throw new Error('El item no existe');
+    }
+    console.log(`Item encontrado: ${item.nombre} - Precio: ${item.precio} puntos`);
+
+    
+    if (!item.disponible) {
+      throw new Error('Este item no está disponible para compra');
+    }
+
+    
+    const yaLoTiene = await alumnoTieneItem(alumnoId, itemId);
+    if (yaLoTiene) {
+      throw new Error('Ya tienes este item');
+    }
+
+    // puntos del alumno
+    const puntos = await obtenerPuntosPorUsuario(usuarioId);
+    if (!puntos) {
+      throw new Error('No se encontraron puntos para este alumno');
+    }
+    console.log(`Puntos del alumno: ${puntos.puntos}`);
+
+    // Validar que tenga suficientes puntos
+    if (puntos.puntos < item.precio) {
+      throw new Error(
+        `Puntos insuficientes. Tienes ${puntos.puntos} puntos, necesitas ${item.precio} puntos`
+      );
+    }
+
+    // Descontar los puntos
+    const puntosActualizados = await restarPuntos(alumnoId, item.precio);
+    console.log(`Puntos descontados. Nuevos puntos: ${puntosActualizados.puntos}`);
+
+  
+    const compra = await registrarCompraItem(alumnoId, itemId);
+    console.log(`Compra registrada exitosamente`);
+
+      // ============================================
+    
+    // Obtener el total de avatares comprados 
+    const totalAvatares = await obtenerContador(usuarioId, 'compras');
+
+
+    // Procesar eventos de logros
+    const { logrosDesbloqueados } = await procesarEvento(
+      usuarioId,
+      'compras', // o 'avatares' si prefieres ese nombre
+      totalAvatares
+    );
+
+    if (logrosDesbloqueados.length > 0) {
+      console.log(`Logros desbloqueados: ${logrosDesbloqueados.map(l => l.nombre).join(', ')}`);
+    }
+
+
+    return {
+      ok: true,
+      compra,
+      item,
+      puntosAnteriores: puntos.puntos,
+      puntosActuales: puntosActualizados.puntos,
+      puntosGastados: item.precio,
+       logrosDesbloqueados,
+      mensaje: `¡Compraste ${item.nombre}! Te quedan ${puntosActualizados.puntos} puntos`
+    };
+
+  } catch (error) {
+    console.error('Error en comprarItem:', error.message);
+    return {
+      ok: false,
+      error: error.message
+    };
+  }
+}
+
+
+ // Obtiene todos los alumnos que compraron un item específico
+
+
+export async function obtenerAlumnosPorItem(itemId) {
+  try {
+    console.log(`Buscando alumnos que compraron el item ${itemId}`);
+
+   
+    const item = await obtenerItemPorId(itemId);
+    if (!item) {
+      return {
+        ok: false,
+        error: 'El item no existe'
+      };
+    }
+
+    
+    const { data: compras, error } = await supabaseAdmin
+      .from('alumno_has_item')
+      .select(`
+        alumno_id_alumno,
+        item_id_item,
+        movimiento,
+        fecha_canje,
+        alumno:alumno_id_alumno (
+          id_alumno,
+          nacionalidad,
+          alumno_col,
+          aula_id_aula,
+          usuario:usuario_id_usuario (
+            id_usuario,
+            nombre,
+            apellido,
+            email,
+            edad
+          )
+        )
+      `)
+      .eq('item_id_item', itemId)
+      .order('fecha_canje', { ascending: false });
+
+    if (error) {
+      console.error('Error al obtener alumnos:', error);
+      return {
+        ok: false,
+        error: error.message || 'Error al obtener alumnos'
+      };
+    }
+
+    
+    const alumnosFormateados = compras.map(compra => ({
+      
+      alumno_id_alumno: compra.alumno_id_alumno,
+      item_id_item: compra.item_id_item,
+      movimiento: compra.movimiento,
+      fecha_canje: compra.fecha_canje,
+      
+     
+      alumno: {
+        id_alumno: compra.alumno.id_alumno,
+        nacionalidad: compra.alumno.nacionalidad,
+        alumno_col: compra.alumno.alumno_col,
+        aula_id_aula: compra.alumno.aula_id_aula,
+        
+       
+        usuario: {
+          id_usuario: compra.alumno.usuario.id_usuario,
+          nombre: compra.alumno.usuario.nombre,
+          apellido: compra.alumno.usuario.apellido,
+          email: compra.alumno.usuario.email,
+          edad: compra.alumno.usuario.edad
+        }
+      }
+    }));
+
+    console.log(`Se encontraron ${alumnosFormateados.length} alumnos`);
+
+    return {
+      ok: true,
+      item: {
+        id_item: item.id_item,
+        nombre: item.nombre,
+        descripcion: item.descripcion,
+        precio: item.precio
+      },
+      alumnos: alumnosFormateados,
+      total: alumnosFormateados.length
+    };
+
+  } catch (error) {
+    console.error('Error en obtenerAlumnosPorItem:', error);
+    return {
+      ok: false,
+      error: error.message || 'Error al obtener alumnos'
     };
   }
 }

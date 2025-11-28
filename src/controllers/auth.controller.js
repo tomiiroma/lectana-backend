@@ -3,6 +3,7 @@ import { login, registerAlumno, registerDocente, registerAdministrador, getMe } 
 import cookieParser from 'cookie-parser';
 import { loginSchema,registerAlumnoSchema,registerDocenteSchema,registerAdministradorSchema } from '../schemas/authSchema.js';
 import { procesarEvento } from '../services/logro.eventos.service.js';
+import { inicializarPuntosAlumno } from '../services/puntos.service.js';
 
 export async function loginController(req, res, next) {
   try {
@@ -44,6 +45,11 @@ export async function registerAlumnoController(req, res, next) {
   try {
     const data = registerAlumnoSchema.parse(req.body);
     const result = await registerAlumno(data);
+
+    // -------------------------------------
+
+     await inicializarPuntosAlumno(result.user.id_usuario, 10);
+
 
     // --------------------------------------
 
