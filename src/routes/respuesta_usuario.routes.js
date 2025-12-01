@@ -20,11 +20,20 @@ router.use(requireAuth);
 // 1. POST /respuesta-usuario - Crear respuesta de usuario
 router.post('/', crearRespuestaUsuarioController);
 
+// 9. POST /respuesta-usuario/completar - Marcar actividad como completada (MUST BE BEFORE /:id routes)
+router.post('/completar', requireAuth, requireRole('alumno'), marcarActividadCompletadaController);
+
 // 2. GET /respuesta-usuario/alumno/:alumnoId/actividad/:actividadId - Obtener respuestas de alumno para actividad
 router.get('/alumno/:alumnoId/actividad/:actividadId', obtenerRespuestasUsuarioActividadController);
 
 // 3. GET /respuesta-usuario/pregunta/:id - Obtener todas las respuestas de una pregunta
 router.get('/pregunta/:id', obtenerRespuestasPreguntaController);
+
+// 7. GET /respuesta-usuario/estadisticas/:id - Obtener estadísticas de una actividad
+router.get('/estadisticas/:id', obtenerEstadisticasActividadController);
+
+// 8. GET /respuesta-usuario/verificar/:alumnoId/:preguntaId - Verificar si alumno ya respondió
+router.get('/verificar/:alumnoId/:preguntaId', verificarRespuestaExistenteController);
 
 // 4. GET /respuesta-usuario/:id - Obtener respuesta de usuario por ID
 router.get('/:id', obtenerRespuestaUsuarioPorIdController);
@@ -34,14 +43,5 @@ router.put('/:id', actualizarRespuestaUsuarioController);
 
 // 6. DELETE /respuesta-usuario/:id - Eliminar respuesta de usuario
 router.delete('/:id', eliminarRespuestaUsuarioController);
-
-// 7. GET /respuesta-usuario/estadisticas/:id - Obtener estadísticas de una actividad
-router.get('/estadisticas/:id', obtenerEstadisticasActividadController);
-
-// 8. GET /respuesta-usuario/verificar/:alumnoId/:preguntaId - Verificar si alumno ya respondió
-router.get('/verificar/:alumnoId/:preguntaId', verificarRespuestaExistenteController);
-
-// 9. POST /respuesta-usuario/completar - Marcar actividad como completada
-router.post('/completar', requireAuth, requireRole('alumno'), marcarActividadCompletadaController);
 
 export default router;
