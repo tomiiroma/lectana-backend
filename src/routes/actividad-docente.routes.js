@@ -6,7 +6,9 @@ import {
   actualizarActividadDocenteController,
   eliminarActividadDocenteController,
   asignarActividadAAulasDocenteController,
-  obtenerActividadesDeAulaDocenteController
+  obtenerActividadesDeAulaDocenteController,
+  obtenerRespuestasActividadController,
+  obtenerRespuestasAulaController
 } from '../controllers/actividad-docente.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -38,6 +40,12 @@ router.put('/:id/asignar-aulas', asignarActividadAAulasDocenteController);
 
 // 7. GET /api/docentes/actividades/aula/:id - Obtener actividades de un aula específica del docente
 router.get('/aula/:id', obtenerActividadesDeAulaDocenteController);
+
+// 8. GET /api/docentes/actividades/:id/respuestas - Obtener respuestas de una actividad
+router.get('/:id/respuestas', obtenerRespuestasActividadController);
+
+// 9. GET /api/docentes/aula/:aulaId/respuestas - Obtener respuestas de una actividad por aula
+router.get('/aula/:aulaId/respuestas', obtenerRespuestasAulaController);
 
 export default router;
 

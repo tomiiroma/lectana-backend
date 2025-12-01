@@ -205,6 +205,47 @@ export async function obtenerEstadisticasActividad(actividad_id_actividad) {
   };
 }
 
-//NUEVAS FUNCIONES
+// Marcar actividad como completada
+export async function marcarActividadCompletada(alumnoId, actividadId) {
+  // 1. Obtener o crear resultado_actividad para este alumno y actividad
+  const { data: resultado, error: errorObtener } = await supabaseAdmin
+    .from('resultados_actividad')
+    .select('*')
+    .eq('alumno_id_alumno', alumnoId)
+    .eq('id_actividad', actividadId)
+    .single();
 
+  if (errorObtener && errorObtener.code !== 'PGRST116') {
+    throw new Error(errorObtener.message);
+  }
+
+  // Si no existe, crearlo
+  if (!resultado) {
+    const { data: nuevoResultado, error: errorCrear } = await supabaseAdmin
+      .from('resultados_actividad')
+      .insert([{
+        alumno_id_alumno: alumnoId,
+        id_actividad: actividadId,
+        estado: 'completada',
+        sin_corregir: 0,
+        porcentaje: 0
+      }])
+      .select('*')
+      .single();
+
+    if (errorCrear) throw new Error(errorCrear.message);
+    return nuevoResultado;
+  }
+
+  // Si existe, actualizar el estado a completada
+  const { data: actualizado, error: errorActualizar } = await supabaseAdmin
+    .from('resultados_actividad')
+    .update({ estado: 'completada' })
+    .eq('id_resultado_actividad', resultado.id_resultado_actividad)
+    .select('*')
+    .single();
+
+  if (errorActualizar) throw new Error(errorActualizar.message);
+  return actualizado;
+}
 

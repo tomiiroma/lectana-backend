@@ -524,5 +524,100 @@ export async function obtenerActividadesDeAulaDocente(aulaId, docenteId) {
   return data;
 }
 
+// Obtener respuestas de una actividad específica
+export async function obtenerRespuestasActividad(actividadId, docenteId) {
+  // Verificar que el docente tiene acceso a la actividad
+  await verificarAccesoActividad(actividadId, docenteId);
+
+  // Obtener todas las respuestas de usuarios para esta actividad
+  const { data: preguntas, error: errorPreguntas } = await supabaseAdmin
+    .from('pregunta_actividad')
+    .select(`
+      id_pregunta_actividad,
+      enunciado,
+      respuesta_usuario(
+        id_respuesta_usuario,
+        respuesta_texto,
+        fecha_respuesta,
+        alumno:alumno_id_alumno(
+          id_alumno,
+          usuario:usuario_id_usuario(
+            nombre,
+            apellido,
+            email
+          )
+        ),
+        respuesta_actividad:respuesta_actividad_id_respuesta_actividad(
+          id_respuesta_actividad,
+          respuestas,
+          respuesta_correcta
+        )
+      )
+    `)
+    .eq('actividad_id_actividad', actividadId);
+
+  if (errorPreguntas) throw new Error(errorPreguntas.message);
+  return preguntas;
+}
+
+// Obtener respuestas de una actividad por aula
+export async function obtenerRespuestasAula(aulaId, docenteId) {
+  // Verificar que el docente tiene acceso al aula
+  const { data: aula, error: aulaError } = await supabaseAdmin
+    .from('aula')
+    .select('id_aula, docente_id_docente')
+    .eq('id_aula', aulaId)
+    .eq('docente_id_docente', docenteId)
+    .single();
+
+  if (aulaError) throw new Error('No tienes acceso a este aula');
+
+  // Obtener todas las actividades del aula
+  const { data: actividadesAula, error: errorActividades } = await supabaseAdmin
+    .from('actividad_aula')
+    .select('actividad_id_actividad')
+    .eq('aula_id_aula', aulaId);
+
+  if (errorActividades) throw new Error(errorActividades.message);
+
+  if (!actividadesAula || actividadesAula.length === 0) {
+    return [];
+  }
+
+  const actividadIds = actividadesAula.map(aa => aa.actividad_id_actividad);
+
+  // Obtener todas las respuestas de las actividades del aula
+  const { data: respuestas, error: errorRespuestas } = await supabaseAdmin
+    .from('respuesta_usuario')
+    .select(`
+      id_respuesta_usuario,
+      respuesta_texto,
+      fecha_respuesta,
+      alumno:alumno_id_alumno(
+        id_alumno,
+        usuario:usuario_id_usuario(
+          nombre,
+          apellido,
+          email
+        )
+      ),
+      pregunta_actividad:pregunta_actividad_id_pregunta_actividad(
+        id_pregunta_actividad,
+        enunciado,
+        actividad_id_actividad
+      ),
+      respuesta_actividad:respuesta_actividad_id_respuesta_actividad(
+        id_respuesta_actividad,
+        respuestas,
+        respuesta_correcta
+      )
+    `)
+    .in('pregunta_actividad.actividad_id_actividad', actividadIds)
+    .order('fecha_respuesta', { ascending: false });
+
+  if (errorRespuestas) throw new Error(errorRespuestas.message);
+  return respuestas;
+}
+
 
 

@@ -324,8 +324,8 @@ export async function removerActividadDeAula(id_actividad, id_aula) {
   if (error) throw new Error(error.message);
 }
 
-// Obtener actividades de un aula específica
-export async function obtenerActividadesDeAula(id_aula) {
+// Obtener actividades de un aula específica (filtrando por alumno y excluyendo completadas)
+export async function obtenerActividadesDeAula(id_aula, alumnoId = null) {
   const { data, error } = await supabaseAdmin
     .from('actividad_aula')
     .select(`
@@ -337,7 +337,11 @@ export async function obtenerActividadesDeAula(id_aula) {
         tipo,
         descripcion,
         cuento_id_cuento,
-        cuento:cuento_id_cuento(id_cuento, titulo)
+        cuento:cuento_id_cuento(id_cuento, titulo),
+        resultados_actividad(
+          estado,
+          alumno_id_alumno
+        )
       ),
       aula:aula_id_aula(
         id_aula,
@@ -353,6 +357,17 @@ export async function obtenerActividadesDeAula(id_aula) {
     .order('fecha_asignacion', { ascending: false });
   
   if (error) throw new Error(error.message);
+  
+  // Filtrar actividades completadas si se proporciona alumnoId
+  if (alumnoId && data) {
+    return data.filter(item => {
+      const resultados = item.actividad?.resultados_actividad || [];
+      const resultadoAlumno = resultados.find(r => r.alumno_id_alumno === alumnoId);
+      // Incluir solo si no está completada o no existe resultado
+      return !resultadoAlumno || resultadoAlumno.estado !== 'completada';
+    });
+  }
+  
   return data;
 }
 

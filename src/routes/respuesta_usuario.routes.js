@@ -8,6 +8,7 @@ import {
   eliminarRespuestaUsuarioController,
   obtenerEstadisticasActividadController,
   verificarRespuestaExistenteController,
+  marcarActividadCompletadaController
 } from '../controllers/respuesta_usuario.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 
@@ -40,5 +41,7 @@ router.get('/estadisticas/:id', obtenerEstadisticasActividadController);
 // 8. GET /respuesta-usuario/verificar/:alumnoId/:preguntaId - Verificar si alumno ya respondió
 router.get('/verificar/:alumnoId/:preguntaId', verificarRespuestaExistenteController);
 
+// 9. POST /respuesta-usuario/completar - Marcar actividad como completada
+router.post('/completar', requireAuth, requireRole('alumno'), marcarActividadCompletadaController);
 
 export default router;

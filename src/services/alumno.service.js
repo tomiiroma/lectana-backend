@@ -224,80 +224,19 @@ export async function adminActualizarAlumno(alumnoId, updates) {
   return await obtenerAlumnoPorId(alumnoId);
 }
 
-export async function responderPregunta(respuesta, id_pregunta, id_usuario){
-    if(!respuesta || !id_pregunta || !id_usuario){
+export async function responderPregunta(respuesta, id_pregunta, id_alumno){
+    if(!respuesta || !id_pregunta || !id_alumno){
       throw new Error("Faltan Datos")
-    }
-
-     const { data: alumnoData, error: errorId } = await supabaseAdmin
-    .from("alumno")
-    .select("id_alumno")
-    .eq("usuario_id_usuario", id_usuario)
-    .single(); 
-
-   if(errorId){
-      throw new Error('Error al cambiar del aula: ' + error.message);
     }
 
     const {data, error} = await supabaseAdmin
     .from('respuesta_usuario')
-    .insert({respuesta_texto: respuesta, pregunta_actividad_id_pregunta_actividad: id_pregunta, alumno_id_alumno: alumnoData.id_alumno})
+    .insert({respuesta_texto: respuesta, pregunta_actividad_id_pregunta_actividad: id_pregunta, alumno_id_alumno: id_alumno})
     .select()
-    if(error){
-      console.log("Error", error.message)
+        if(error){
+                console.log("Error", error.message)
+
       throw new Error("Error al crear respuesta")
-    }
-
-    return data;
-}
-
-export async function obtenerAulasAlumno(id_usuario) {
-  if (!id_usuario) {
-    throw new Error("Falta ID del alumno");
-  }
-
-  const { data: alumnoData, error: errorId } = await supabaseAdmin
-    .from("alumno")
-    .select("id_alumno")
-    .eq("usuario_id_usuario", id_usuario)
-    .single(); 
-    
-
-  const id_alumno = alumnoData.id_alumno;
-
-  const { data, error } = await supabaseAdmin
-    .from("alumno_has_aula")
-    .select(`
-      aula_id_aula,
-      aula (
-        id_aula,
-        nombre_aula,
-        grado
-      )
-    `)
-    .eq("alumno_id_alumno", id_alumno); 
-
-  if (error) {
-    console.error("Error SUPABASE:", error.message);
-    throw new Error(`Error al obtener aulas: ${error.message}`);
-  }
-
-  return data;
-}
-
-export async function completarActividad(idActividad, idAlumno, total,total_correctas, total_incorrectas,sin_corregir, estado, nota ){
-    if(!idActividad || !idAlumno || !total || !total_correctas || !total_incorrectas || !sin_corregir || !estado || !nota){
-    throw new Error("Falta un dato");
-    }
-
-    const {data, error} = await supabaseAdmin
-    .from('resultados_actividad')
-    .insert({id_actividad: idActividad, id_alumno: idAlumno, total_preguntas: total, correctas: total_correctas,incorrectas: total_incorrectas, sin_corregir: sin_corregir, estado: estado, porcentaje: nota})
-    .select()
-
-    if (error) {
-      console.error("Error SUPABASE:", error.message);
-      throw new Error(`Error al completar actividad: ${error.message}`);
     }
 
     return data;
@@ -357,78 +296,3 @@ export async function unirseAula(usuarioId, codigoAcceso) {
   };
 }
 
-// Salir de un aula
-export async function salirAula(usuarioId) {
-  // 1. Obtener ID del alumno
-  const { data: alumno, error: alumnoError } = await supabaseAdmin
-    .from('alumno')
-    .select('id_alumno')
-    .eq('usuario_id_usuario', usuarioId)
-    .single();
-  
-  if (alumnoError || !alumno) {
-    throw new Error('Alumno no encontrado');
-  }
-  
-  // 2. Verificar que el alumno está en un aula
-  const { data: asignacion, error: asignacionError } = await supabaseAdmin
-    .from('alumno_has_aula')
-    .select('aula_id_aula, aula:aula_id_aula(nombre_aula)')
-    .eq('alumno_id_alumno', alumno.id_alumno)
-    .maybeSingle();
-  
-  if (asignacionError) {
-    throw new Error('Error al verificar asignación del alumno: ' + asignacionError.message);
-  }
-  
-  if (!asignacion) {
-    throw new Error('No estás asignado a ningún aula');
-  }
-  
-  // 3. Eliminar asignación del alumno
-  const { error: deleteError } = await supabaseAdmin
-    .from('alumno_has_aula')
-    .delete()
-    .eq('alumno_id_alumno', alumno.id_alumno);
-  
-  if (deleteError) {
-    throw new Error('Error al salir del aula: ' + deleteError.message);
-  }
-  
-  return {
-    mensaje: `Has salido de ${asignacion.aula.nombre_aula}`,
-    aula: asignacion.aula
-  };
-}
-
-
-export async function cambiarAula(id_usuario,id_aula){
-    if(!id_usuario || !id_aula){
-          throw new Error('No estás asignado a ningún aula');
-    }
-
-      const { data: alumnoData, error: errorId } = await supabaseAdmin
-    .from("alumno")
-    .select("id_alumno")
-    .eq("usuario_id_usuario", id_usuario)
-    .single(); 
-
-   if(errorId){
-      throw new Error('Error al cambiar del aula: ' + error.message);
-    }
-
-
-    const {data, error} = await supabaseAdmin
-    .from('alumno_has_aula')
- .upsert({ 
-            alumno_id_alumno: alumnoData.id_alumno, 
-            aula_id_aula: id_aula
-        })
-        .select()
-
-    if(error){
-      throw new Error('Error al cambiar del aula: ' + error.message);
-    }
-
-    return data
-}

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, obtenerAulasAlumno, unirseAula, salirAula, cambiarAula } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, unirseAula } from '../services/alumno.service.js';
 import { crearAlumnoSchema, listarSchema, actualizarPerfilSchema,adminActualizarAlumnoSchema } from '../schemas/alumnoSchema.js';
 import { idSchema } from "../schemas/idSchema.js";
 
@@ -110,31 +110,18 @@ export async function responderPreguntaController(req, res){
   try{
   const {respuesta} = req.body;
   const {id_pregunta} = req.params;
-  const id_usuario = req.user.sub;
+  const id_alumno = req.user.sub;
 
 
 
-  const respuestaPregunta = await responderPregunta(respuesta, id_pregunta, id_usuario);
+  const respuestaPregunta = await responderPregunta(respuesta, id_pregunta, id_alumno);
 
     res.status(200).json({respuestaPregunta})
   }catch(error){
-    console.log("Error", error.message)
     throw new Error(error.message)
+    console.log("Error", error.message)
   }
 
-}
-
-export async function obtenerAulasAlumnoController(req,res){
-  try{
-    const id_usuario = req.user.sub
-
-    const aulasAlumno = await obtenerAulasAlumno(id_usuario)
-
-    res.status(200).json({aulasAlumno});
-  }catch(error){
-    console.log("Error", error.message)
-    throw new Error(error.message)
-  }
 }
 
 // Controlador para unirse a un aula usando código de acceso
@@ -162,34 +149,4 @@ export async function unirseAulaController(req, res, next) {
     }
     next(error);
   }
-}
-
-// Controlador para salir de un aula
-export async function salirAulaController(req, res, next) {
-  try {
-    const usuarioId = req.user.sub; // Del JWT
-    
-    const result = await salirAula(usuarioId);
-    res.json({ ok: true, data: result });
-  } catch (error) {
-    const errorMsg = String(error.message).toLowerCase();
-    if (errorMsg.includes('no encontrado') || errorMsg.includes('no estás asignado')) {
-      return res.status(404).json({ ok: false, error: error.message });
-    }
-    next(error);
-  }
-}
-
-export async function cambiarAulaController(req,res){
-    try{
-      const alumnoId = req.user.sub;
-      const aulaId = req.body.aulaId;
-      console.log(alumnoId, aulaId)
-      const cambioAula = await cambiarAula(alumnoId, aulaId)
-
-      res.status(200).json({cambioAula})
-    }catch(error){
-    console.log("Error", error.message)
-    throw new Error(error.message)
-    }
 }

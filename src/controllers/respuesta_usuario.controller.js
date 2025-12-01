@@ -8,6 +8,7 @@ import {
   eliminarRespuestaUsuario,
   verificarRespuestaExistente,
   obtenerEstadisticasActividad,
+  marcarActividadCompletada
 } from '../services/respuesta_usuario.service.js';
 
 import { crearRespuestaUsuarioSchema, actualizarRespuestaUsuarioSchema, idSchema } from '../schemas/respuestaUsuarioSchema.js';
@@ -209,6 +210,41 @@ export async function verificarRespuestaExistenteController(req, res, next) {
         ok: false, 
         error: 'Parámetros inválidos', 
         detalles: error.flatten() 
+      });
+    }
+    next(error);
+  }
+}
+
+// 9. Marcar actividad como completada
+export async function marcarActividadCompletadaController(req, res, next) {
+  try {
+    const { actividadId } = z.object({
+      actividadId: z.coerce.number().int().positive()
+    }).parse(req.body);
+    
+    const alumnoId = req.user.alumno_id;
+    
+    if (!alumnoId) {
+      return res.status(400).json({
+        ok: false,
+        error: 'No se encontró ID de alumno en el token'
+      });
+    }
+    
+    const resultado = await marcarActividadCompletada(alumnoId, actividadId);
+    
+    res.json({
+      ok: true,
+      mensaje: 'Actividad marcada como completada',
+      resultado
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Validación fallida',
+        detalles: error.flatten()
       });
     }
     next(error);

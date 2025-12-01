@@ -6,7 +6,9 @@ import {
   actualizarActividadCompletaConPreguntas,
   eliminarActividad,
   asignarActividadAAulasDocente,
-  obtenerActividadesDeAulaDocente
+  obtenerActividadesDeAulaDocente,
+  obtenerRespuestasActividad,
+  obtenerRespuestasAula
 } from '../services/actividad-docente.service.js';
 import { idSchema } from '../schemas/idSchema.js';
 import { 
@@ -191,6 +193,68 @@ export async function obtenerActividadesDeAulaDocenteController(req, res, next) 
       ok: true, 
       actividades,
       total: actividades.length 
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Parámetros inválidos', 
+        detalles: error.flatten() 
+      });
+    }
+    if (error.message.includes('No tienes acceso')) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: error.message 
+      });
+    }
+    next(error);
+  }
+}
+
+// 8. Obtener respuestas de una actividad específica
+export async function obtenerRespuestasActividadController(req, res, next) {
+  try {
+    const { id } = idSchema.parse(req.params);
+    const docenteId = req.user.docente_id;
+    
+    const respuestas = await obtenerRespuestasActividad(id, docenteId);
+    
+    res.json({ 
+      ok: true, 
+      respuestas,
+      total_preguntas: respuestas.length
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'Parámetros inválidos', 
+        detalles: error.flatten() 
+      });
+    }
+    if (error.message.includes('No tienes acceso') || error.message.includes('no encontrada')) {
+      return res.status(403).json({ 
+        ok: false, 
+        error: error.message 
+      });
+    }
+    next(error);
+  }
+}
+
+// 9. Obtener respuestas de una actividad por aula
+export async function obtenerRespuestasAulaController(req, res, next) {
+  try {
+    const { aulaId } = idSchema.parse({ id: req.params.aulaId });
+    const docenteId = req.user.docente_id;
+    
+    const respuestas = await obtenerRespuestasAula(aulaId, docenteId);
+    
+    res.json({ 
+      ok: true, 
+      respuestas,
+      total: respuestas.length
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
