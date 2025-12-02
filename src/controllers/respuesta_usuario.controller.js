@@ -223,16 +223,16 @@ export async function marcarActividadCompletadaController(req, res, next) {
       actividadId: z.coerce.number().int().positive()
     }).parse(req.body);
     
-    const alumnoId = req.user.alumno_id;
+    const userId = req.user.sub;
     
-    if (!alumnoId) {
+    if (!userId) {
       return res.status(400).json({
         ok: false,
         error: 'No se encontró ID de alumno en el token'
       });
     }
     
-    const resultado = await marcarActividadCompletada(alumnoId, actividadId);
+    const resultado = await marcarActividadCompletada(userId, actividadId);
     
     res.json({
       ok: true,

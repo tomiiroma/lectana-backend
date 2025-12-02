@@ -206,12 +206,25 @@ export async function obtenerEstadisticasActividad(actividad_id_actividad) {
 }
 
 // Marcar actividad como completada
-export async function marcarActividadCompletada(alumnoId, actividadId) {
+export async function marcarActividadCompletada(userId, actividadId) {
+     
+  const { data: alumnoData, error: errorId } = await supabaseAdmin
+    .from("alumno")
+    .select("id_alumno")
+    .eq("usuario_id_usuario", userId)
+    .single(); 
+
+   if(errorId){
+      throw new Error('Error al cambiar del aula: ' + error.message);
+    } 
+  
   // 1. Obtener o crear resultado_actividad para este alumno y actividad
+    console.log(alumnoData.id_alumno)
+
   const { data: resultado, error: errorObtener } = await supabaseAdmin
     .from('resultados_actividad')
     .select('*')
-    .eq('alumno_id_alumno', alumnoId)
+    .eq('id_alumno', alumnoData.id_alumno)
     .eq('id_actividad', actividadId)
     .single();
 
@@ -224,7 +237,7 @@ export async function marcarActividadCompletada(alumnoId, actividadId) {
     const { data: nuevoResultado, error: errorCrear } = await supabaseAdmin
       .from('resultados_actividad')
       .insert([{
-        alumno_id_alumno: alumnoId,
+        id_alumno: alumnoData.id_alumno,
         id_actividad: actividadId,
         estado: 'completada',
         sin_corregir: 0,

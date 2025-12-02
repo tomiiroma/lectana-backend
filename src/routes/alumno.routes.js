@@ -7,13 +7,13 @@ import {
   obtenerAlumnoPorIdController,
   adminActualizarAlumnoController,
   responderPreguntaController,
-  obtenerAulasAlumnoController,
+  //obtenerAulasAlumnoController,
   unirseAulaController,
-  salirAulaController,
-  cambiarAulaController
+  //salirAulaController,
+  //cambiarAulaController
 } from '../controllers/alumno.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
-import { completarActividad } from '../services/alumno.service.js';
+
 
 const router = Router();
 
@@ -40,14 +40,14 @@ router.put('/admin-actualizar-alumno/:id', requireAuth, requireRole('administrad
 router.post("/responder-pregunta/:id_pregunta", requireAuth, requireRole("alumno"), responderPreguntaController)
 
 // Obtener aulas del alumno
-router.get("/obtenerAula", requireAuth, requireRole("alumno"), obtenerAulasAlumnoController)
+//router.get("/obtenerAula", requireAuth, requireRole("alumno"), obtenerAulasAlumnoController)
 
 // Unirse a un aula mediante código de acceso
 router.post('/unirse-aula', requireAuth, requireRole('alumno'), unirseAulaController);
 
 // Salir de un aula
-router.post('/salir-aula', requireAuth, requireRole('alumno'), salirAulaController);
+//router.post('/salir-aula', requireAuth, requireRole('alumno'), salirAulaController);
 
-router.post('/cambiarAula', requireAuth, requireRole('alumno'), cambiarAulaController)
+//router.post('/cambiarAula', requireAuth, requireRole('alumno'), cambiarAulaController)
 
 export default router;
