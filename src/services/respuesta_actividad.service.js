@@ -19,7 +19,7 @@ export async function crearRespuestaActividad({ respuesta, es_correcta, pregunta
 // Crear múltiples respuestas para una pregunta
 export async function crearRespuestasActividad(pregunta_actividad_id_pregunta_actividad, respuestas) {
   const respuestasData = respuestas.map(respuesta => ({
-    respuesta: respuesta.respuesta,
+    respuestas: [respuesta.respuesta],
     es_correcta: respuesta.es_correcta,
     pregunta_actividad_id_pregunta_actividad
   }));
