@@ -112,8 +112,6 @@ export async function responderPreguntaController(req, res){
   const {id_pregunta} = req.params;
   const id_alumno = req.user.sub;
 
-
-
   const respuestaPregunta = await responderPregunta(respuesta, id_pregunta, id_alumno);
 
     res.status(200).json({respuestaPregunta})
