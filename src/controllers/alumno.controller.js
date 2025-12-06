@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, unirseAula } from '../services/alumno.service.js';
+import { crearAlumno, listarAlumnos, obtenerPerfilAlumno, actualizarPerfilAlumno, obtenerAlumnoPorId, adminActualizarAlumno, responderPregunta, unirseAula, sumarPuntos } from '../services/alumno.service.js';
 import { crearAlumnoSchema, listarSchema, actualizarPerfilSchema,adminActualizarAlumnoSchema } from '../schemas/alumnoSchema.js';
 import { idSchema } from "../schemas/idSchema.js";
 
@@ -147,4 +147,33 @@ export async function unirseAulaController(req, res, next) {
     }
     next(error);
   }
+}
+
+export async function sumarPuntosController(req, res){
+    try{
+        const {id_alumno, puntosASumar} = req.body
+        console.log('id_alumno recibido:', id_alumno); 
+        console.log('puntosASumar recibido:', puntosASumar);
+
+        if(!id_alumno){
+            return res.status(400).json({ ok: false, error: 'id_alumno es requerido' })
+        }
+
+        if(!puntosASumar){
+            return res.status(400).json({ ok: false, error: 'puntosASumar es requerido' })
+        }
+
+        const resultado = await sumarPuntos(id_alumno, puntosASumar)
+
+        return res.status(200).json({ 
+            ok: true,
+            mensaje: 'Puntos sumados correctamente',
+            puntosNuevos: resultado.puntos,
+            alumno: resultado
+        })
+
+    }catch(error){
+        console.log("Error:", error.message);
+        return res.status(500).json({ ok: false, error: error.message })
+    }
 }

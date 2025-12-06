@@ -13,7 +13,8 @@ import {
   obtenerActividadesDeAula,
   crearActividad,
   getActividadPorAula,
-  getActividadCompleta
+  getActividadCompleta,
+  corregirActividad
 } from '../services/actividad.service.js';
 import { idSchema } from '../schemas/idSchema.js';
 import { asignarAulasSchema , actualizarActividadCompletaSchema ,crearActividadCompletaSchema, actualizarActividadCompletaConPreguntasSchema, crearActividadConCuentoSchema } from '../schemas/actividadSchema,.js';
@@ -328,5 +329,37 @@ export async function getActividadCompletaController(req, res){
 
   }catch(error){
       console.log("Error: ", error.message);
+  }
+}
+
+export async function corregirActividadController(req,res){
+  try{
+      const {id_pregunta, respuestaUsuario} = req.body
+   console.log('id_pregunta recibido:', id_pregunta); 
+      console.log('respuestaUsuario recibido:', respuestaUsuario);
+
+   if(!id_pregunta){
+      return res.status(400).json({ ok: false, error: 'id_pregunta es requerido' })
+    }
+
+    const corregirActividadRes = await corregirActividad(id_pregunta, respuestaUsuario)
+
+        if(!corregirActividadRes || corregirActividadRes.respuesta_correcta === undefined){
+          return res.status(404).json({ ok: false, error: 'No se encontró la pregunta o respuesta correcta' })
+      }
+
+      const esCorrecta = Number(respuestaUsuario) === Number(corregirActividadRes.respuesta_correcta)
+
+      return res.status(200).json({ 
+          ok: true,
+          esCorrecta: esCorrecta,
+          mensaje: esCorrecta ? "Respuesta Correcta" : "Respuesta Incorrecta",
+          respuestaCorrecta: corregirActividadRes.respuesta_correcta,
+          respuestaUsuario: respuestaUsuario
+      })
+
+  }catch(error){
+      console.log("Error: ", error.message);
+   res.status(500).json({ ok: false, error: error.message })
   }
 }

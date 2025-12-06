@@ -9,6 +9,7 @@ import {
   responderPreguntaController,
   //obtenerAulasAlumnoController,
   unirseAulaController,
+  sumarPuntosController,
   //salirAulaController,
   //cambiarAulaController
 } from '../controllers/alumno.controller.js';
@@ -45,6 +46,7 @@ router.post("/responder-pregunta/:id_pregunta", requireAuth, requireRole("alumno
 // Unirse a un aula mediante código de acceso
 router.post('/unirse-aula', requireAuth, requireRole('alumno'), unirseAulaController);
 
+router.post('/sumarPuntos', requireAuth, requireRole('alumno'), sumarPuntosController);
 // Salir de un aula
 //router.post('/salir-aula', requireAuth, requireRole('alumno'), salirAulaController);
 

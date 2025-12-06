@@ -298,3 +298,41 @@ export async function unirseAula(usuarioId, codigoAcceso) {
   };
 }
 
+export async function sumarPuntos(id_alumno, puntosASumar){
+    if(!id_alumno){
+        throw new Error('Falta el id del alumno');
+    }
+    
+    if(!puntosASumar){
+        throw new Error('No se recibieron puntos para sumar');
+    }
+
+    // Primero obtenemos los puntos actuales del alumno
+    const {data: alumnoActual, error: errorGet} = await supabaseAdmin
+        .from('puntos_alumno')
+        .select('puntos')
+        .eq('alumno_id_alumno', id_alumno)
+        .single()
+
+    if(errorGet){
+        console.log("Error al obtener puntos:", errorGet.message)
+        throw new Error("Error al obtener los puntos del alumno")
+    }
+
+    const nuevosPuntos = (alumnoActual.puntos || 0) + puntosASumar
+
+    const {data, error} = await supabaseAdmin
+        .from('puntos_alumno')
+        .update({ puntos: nuevosPuntos })
+        .eq('alumno_id_alumno', id_alumno)
+        .select()
+        .single()
+
+    if(error){
+        console.log("Error al actualizar puntos:", error.message)
+        throw new Error("Error al actualizar los puntos del alumno")
+    }
+
+    console.log("Puntos actualizados:", data)
+    return data
+}

@@ -537,3 +537,25 @@ export async function getActividadCompleta(id_actividad){
 
       return preguntasConRespuestas
 }
+
+export async function corregirActividad(id_pregunta, respuestaUsuario){
+
+  if(!id_pregunta){
+      throw new Error('Falta el id de pregunta');
+  }
+
+  const {data, error} = await supabaseAdmin
+  .from('respuesta_actividad')
+  .select()
+  .eq("pregunta_actividad_id_pregunta_actividad" , id_pregunta)
+  .single()
+
+
+      if(error){
+        console.log("Error", error.message)
+        throw new Error("Error en respuesta_actividad")
+      }
+      console.log(data)
+      return data;
+}
+
