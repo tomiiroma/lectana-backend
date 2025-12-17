@@ -271,7 +271,7 @@ export async function reactivarItem(id) {
 
 
 /**
- * Obtener items desbloqueados por un estudiante
+ * Obtener items desbloqueados por un estudiante (No se utiliza)
  */
 export async function obtenerItemsDesbloqueados(usuarioId) {
   const { data, error } = await supabaseAdmin
@@ -295,7 +295,7 @@ export async function obtenerItemsDesbloqueados(usuarioId) {
 }
 
 /**
- * Desbloquear un item para un estudiante
+ * Desbloquear un item para un estudiante ( No se utiliza )
  */
 export async function desbloquearItem(usuarioId, itemId) {
   // Verificar si el item ya está desbloqueado
@@ -326,7 +326,7 @@ export async function desbloquearItem(usuarioId, itemId) {
 }
 
 /**
- * Verificar si un item está desbloqueado para un estudiante
+ * Verificar si un item está desbloqueado para un estudiante ( No se utiliza )
  */
 export async function verificarItemDesbloqueado(usuarioId, itemId) {
   const { data, error } = await supabaseAdmin
@@ -344,7 +344,7 @@ export async function verificarItemDesbloqueado(usuarioId, itemId) {
 }
 
 /**
- * Obtener estadísticas de items
+ * Obtener estadísticas de items (No se utiliza)
  */
 export async function obtenerEstadisticasItems() {
   const { data: totalItems, error: totalError } = await supabaseAdmin
