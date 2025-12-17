@@ -23,7 +23,7 @@ async function obtenerIdAlumnoPorUsuario(usuarioId) {
 }
 
 /**
- * Obtener todos los items disponibles (imágenes desbloqueables)
+ * Obtener todos los items disponibles
  */
 export async function obtenerItems() {
   const { data, error } = await supabaseAdmin
@@ -651,7 +651,7 @@ export async function comprarItem(usuarioId, itemId) {
     // Procesar eventos de logros
     const { logrosDesbloqueados } = await procesarEvento(
       usuarioId,
-      'compras', // o 'avatares' si prefieres ese nombre
+      'compras', 
       totalAvatares
     );
 
