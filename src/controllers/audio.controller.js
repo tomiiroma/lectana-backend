@@ -24,7 +24,7 @@ export async function generarAudioController(req, res, next) {
   try {
     const { id } = idSchema.parse(req.params);
     
-    console.log(`🎵 Iniciando generación de audio para cuento ${id}...`);
+    console.log(` Iniciando generación de audio para cuento ${id}...`);
 
     // Verificar si ya existe audio
     const yaTieneAudio = await tieneAudio(id);
@@ -49,11 +49,11 @@ export async function generarAudioController(req, res, next) {
       .eq('id_cuento', id);
 
     // 1. Extraer texto del PDF
-    console.log('📄 Extrayendo texto del PDF...');
+    console.log(' Extrayendo texto del PDF...');
     const texto = await extraerTextoPDF(id);
 
     // 2. Validar texto para TTS
-    console.log('✅ Validando texto...');
+    console.log(' Validando texto...');
     const validacion = validarTextoParaTTS(texto);
     
     if (!validacion.esValido) {
